@@ -180,8 +180,10 @@ func TestDiskEventBinaryRoundTrip(t *testing.T) {
 		Sector:      1024,
 		Dev:         0x800,
 		NrBytes:     4096,
+		PID:         1234,
 		Op:          'W',
 	}
+	copy(orig.Comm[:], "postgres")
 
 	buf := marshalLE(t, &orig)
 	var decoded DiskEvent
@@ -189,6 +191,14 @@ func TestDiskEventBinaryRoundTrip(t *testing.T) {
 
 	if decoded != orig {
 		t.Errorf("round trip failed:\ngot  %+v\nwant %+v", decoded, orig)
+	}
+}
+
+func TestDiskEventCommString(t *testing.T) {
+	e := DiskEvent{}
+	copy(e.Comm[:], "postgres")
+	if got := e.CommString(); got != "postgres" {
+		t.Errorf("CommString() = %q, want %q", got, "postgres")
 	}
 }
 

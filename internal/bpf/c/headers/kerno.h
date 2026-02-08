@@ -96,8 +96,10 @@ struct disk_event {
     __u64 sector;
     __u32 dev;          // device number (MKDEV)
     __u32 nr_bytes;
+    __u32 pid;
     __u8  op;           // 'R' = read, 'W' = write, 'S' = sync
-    __u8  _pad[7];
+    __u8  _pad[3];
+    char  comm[TASK_COMM_LEN];
 };
 
 // ─── Scheduler Delay Event ─────────────────────────────────────────────────

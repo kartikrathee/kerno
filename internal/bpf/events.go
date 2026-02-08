@@ -139,8 +139,15 @@ type DiskEvent struct {
 	Sector      uint64
 	Dev         uint32
 	NrBytes     uint32
+	PID         uint32
 	Op          byte
-	Pad0        [7]byte // padding to 8-byte alignment
+	Pad0        [3]byte // padding to align Comm
+	Comm        [TaskCommLen]byte
+}
+
+// CommString returns the process name as a Go string.
+func (e *DiskEvent) CommString() string {
+	return nullTermString(e.Comm[:])
 }
 
 // Latency returns the I/O latency as a time.Duration.
