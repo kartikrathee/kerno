@@ -1,31 +1,43 @@
-<p align="center">
-  <h1 align="center">KERNO</h1>
-  <p align="center">
-    <strong>eBPF-based kernel observability engine for Linux</strong>
-  </p>
-  <p align="center">
-    <a href="https://github.com/lowplane/kerno/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/lowplane/kerno/actions/workflows/ci.yml/badge.svg"></a>
-    <a href="https://goreportcard.com/report/github.com/lowplane/kerno"><img alt="Go Report Card" src="https://goreportcard.com/badge/github.com/lowplane/kerno"></a>
-    <a href="LICENSE"><img alt="License: Apache 2.0" src="https://img.shields.io/badge/License-Apache_2.0-blue.svg"></a>
-    <a href="https://github.com/lowplane/kerno/releases"><img alt="Release" src="https://img.shields.io/github/v/release/lowplane/kerno?include_prereleases"></a>
-    <img alt="Go Version" src="https://img.shields.io/github/go-mod/go-version/lowplane/kerno">
-  </p>
-</p>
+<div align="center">
+
+# KERNO
+
+### The doctor for your Linux kernel
+
+**Know what's wrong with your server in 30 seconds — in plain English.**
+
+[![CI](https://github.com/lowplane/kerno/actions/workflows/ci.yml/badge.svg)](https://github.com/lowplane/kerno/actions/workflows/ci.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/lowplane/kerno)](https://goreportcard.com/report/github.com/lowplane/kerno)
+[![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![Release](https://img.shields.io/github/v/release/lowplane/kerno?include_prereleases)](https://github.com/lowplane/kerno/releases)
+![Go Version](https://img.shields.io/github/go-mod/go-version/lowplane/kerno)
+
+[**Quick Start**](#quick-start) · [**How It Works**](#how-it-works) · [**Features**](#features) · [**Kubernetes**](#kubernetes-deployment) · [**Docs**](docs/architecture.md)
+
+</div>
 
 ---
 
-Kerno traces **syscall latency**, **TCP flows**, **OOM events**, **disk I/O**, **scheduler delays**, and **file descriptor leaks** in real-time using eBPF — then tells you exactly what's wrong in plain English.
+## What is Kerno?
 
-One command. 30 seconds. Zero configuration.
+Imagine your Linux server is feeling sick. Something is slow, something is breaking, but you don't know what. You check CPU — looks fine. Memory — fine. Your dashboards are green. But users are complaining.
+
+**That's because your dashboards live at the application layer. The real problem is happening deep inside the kernel — and nothing is looking there.**
+
+Kerno looks there.
+
+It watches the Linux kernel in real time using eBPF — the same technology Netflix and Meta use to diagnose their servers — and tells you exactly what's wrong in plain English. No PhD required.
 
 ```bash
 sudo kerno doctor
 ```
 
+That's it. One command. 30 seconds later, you get a diagnostic report that reads like a doctor's note:
+
 ```
 ╔═══════════════════════════════════════════════════════════╗
-║                     KERNO DOCTOR                         ║
-║          Kernel Diagnostic Report                        ║
+║                     KERNO DOCTOR                          ║
+║          Kernel Diagnostic Report                         ║
 ╚═══════════════════════════════════════════════════════════╝
 
 Host:     prod-db-01
@@ -40,23 +52,23 @@ Kernel:   6.8.0-generic
      Signal:   retransmit rate=12.3% (threshold: 2.0%), 847 retransmits
      Cause:    Network path degradation causing excessive retransmissions
      Impact:   Every connection risks latency spikes
-     Fix:      → ethtool -S eth0 | grep -i error
-               → ping -c 100 <gateway>
+     Fix:      ethtool -S eth0 | grep -i error
+               ping -c 100 <gateway>
 
  !!  CRITICAL  Disk I/O Bottleneck Detected
      ─────────────────────────────────────
      Signal:   sync P99=280ms (threshold: 200ms), 3,241 sync ops
-     Cause:    Storage device is saturated — fsync operations are blocking
+     Cause:    Storage device is saturated — fsync operations blocking
      Impact:   Database writes and file syncs are delayed
-     Fix:      → iostat -x 1 5
-               → Consider faster storage or write batching
+     Fix:      iostat -x 1 5
+               Consider faster storage or write batching
 
  !   WARNING   CPU Scheduler Contention
      ──────────────────────────────────
      Signal:   runqueue P99=18ms (warning: 5ms)
-     Cause:    Processes waiting in the CPU run queue longer than expected
-     Fix:      → top -H
-               → Reduce worker threads or increase CPU count
+     Cause:    Processes waiting in the CPU run queue
+     Fix:      top -H
+               Reduce worker threads or increase CPU count
 
 ────────────────────────────────────────────────────────────
  RECOMMENDED ACTION ORDER
@@ -69,59 +81,110 @@ Kernel:   6.8.0-generic
 ════════════════════════════════════════════════════════════
 ```
 
-## Why Kerno
+---
 
-Every observability tool you use lives at the **application layer**. The kernel sees problems **first** — elevated syscall latency, TCP retransmits, memory pressure — minutes before your APM dashboard.
+## Why Kerno Exists
 
-Kerno is the **missing layer**:
+> **The kernel knows before anyone else.** When disk gets slow, when the network starts dropping packets, when memory is about to run out — the kernel sees it first. Minutes before your dashboards. Hours before your users.
 
-| | Layer | K8s Required | SLO Mapping | AI Analysis |
-|---|---|:---:|:---:|:---:|
-| Prometheus | Application | No | No | No |
-| Datadog APM | Application | No | Partial | Yes |
-| Inspektor Gadget | Container | **Yes** | No | No |
-| **Kerno** | **Kernel** | **No** | **Yes** | **Yes** |
+Every observability tool you already use watches your *application*. Kerno watches the *kernel* — the layer underneath everything.
+
+```mermaid
+flowchart TB
+    subgraph Stack["YOUR STACK"]
+        App["Your Application<br/>(Node, Python, Go, Java)"]
+        OS["Operating System"]
+        HW["Hardware"]
+    end
+
+    subgraph Tools["WHO WATCHES WHAT"]
+        APM["Datadog, New Relic<br/>Prometheus, Grafana"]
+        Kerno["<b>KERNO</b><br/><i>eBPF kernel tracing</i>"]
+        Bare["(nobody)"]
+    end
+
+    App -.watched by.-> APM
+    OS -.watched by.-> Kerno
+    HW -.watched by.-> Bare
+
+    style Kerno fill:#e94560,stroke:#fff,color:#fff,stroke-width:3px
+    style App fill:#0f3460,stroke:#16213e,color:#fff
+    style OS fill:#1a1a2e,stroke:#e94560,color:#fff
+    style HW fill:#533483,stroke:#16213e,color:#fff
+    style APM fill:#16213e,stroke:#0f3460,color:#ccc
+    style Bare fill:#16213e,stroke:#0f3460,color:#888
+```
+
+### How Kerno compares
+
+| | Watches | K8s Required | SLO Mapping | AI Analysis | Install Time |
+|---|:---:|:---:|:---:|:---:|:---:|
+| Prometheus | Application | No | No | No | Hours |
+| Datadog APM | Application | No | Partial | Yes | Hours |
+| Inspektor Gadget | Container | **Yes** | No | No | Minutes |
+| **Kerno** | **Kernel** | **No** | **Yes** | **Yes** | **30 seconds** |
+
+---
 
 ## Features
 
-| Feature | Status | Description |
-|---|:---:|---|
-| `kerno doctor` | Done | 30-second automated kernel diagnostic with ranked findings |
-| `kerno trace syscall` | Done | Real-time syscall latency streaming with top-N mode |
-| `kerno trace disk` | Done | Block I/O latency tracing per device/operation/process |
-| `kerno trace sched` | Done | CPU run queue delay monitoring with threshold filtering |
-| `kerno watch tcp` | Done | Aggregated TCP connection monitoring (RTT, retransmits) |
-| `kerno watch oom` | Done | OOM kill alerting with score threshold filtering |
-| `kerno watch fd` | Done | FD leak detection via open/close growth rate |
-| `kerno explain` | Done | AI-powered kernel error explanation (no root needed) |
-| `kerno predict` | Done | Predict failures before they happen via trend analysis |
-| `kerno start` | Done | Daemon mode with Prometheus metrics + health endpoints |
-| Prometheus export | Done | `/metrics` endpoint with 16 kernel metrics |
-| K8s enrichment | Done | Pod/namespace/node context via environment adapters |
-| Helm chart | Done | `helm install kerno` with full DaemonSet deployment |
-| AI-powered analysis | Done | Cross-signal correlation via Anthropic, OpenAI, or Ollama |
-| Web dashboard | Planned | Real-time kernel signal visualization |
-| SLO bridge | Planned | Map kernel signals to error budgets |
+<table>
+<tr>
+<td width="50%" valign="top">
+
+### Diagnostics
+
+- **`kerno doctor`** — 30-second full diagnostic with ranked findings and fix suggestions
+- **`kerno explain`** — AI-powered kernel error explanation (no root needed)
+- **`kerno predict`** — Predict failures before they happen via trend analysis
+
+### Real-Time Tracing
+
+- **`kerno trace syscall`** — Per-process syscall latency streaming
+- **`kerno trace disk`** — Block I/O latency by device, operation, process
+- **`kerno trace sched`** — CPU scheduler run queue delays
+
+</td>
+<td width="50%" valign="top">
+
+### Continuous Monitoring
+
+- **`kerno watch tcp`** — TCP connections, RTT, retransmits
+- **`kerno watch oom`** — OOM kill alerts with full context
+- **`kerno watch fd`** — FD leak detection via growth rate
+- **`kerno start`** — Daemon mode with Prometheus metrics
+
+### Integrations
+
+- **Prometheus** — 16 metrics at `/metrics`
+- **Kubernetes** — Helm chart + pod enrichment
+- **AI Providers** — Anthropic, OpenAI, Ollama (optional)
+- **Systemd** — Unit/slice enrichment on bare metal
+
+</td>
+</tr>
+</table>
+
+---
 
 ## Quick Start
 
 ### Prerequisites
 
-- Linux kernel >= 5.8 with BTF support (`ls /sys/kernel/btf/vmlinux`)
-- Root privileges (or `CAP_BPF` + `CAP_PERFMON`)
+- Linux kernel **>= 5.8** with BTF support (check: `ls /sys/kernel/btf/vmlinux`)
+- Root access (or `CAP_BPF` + `CAP_PERFMON`)
 
-### Install
+### Three commands to a healthy server
 
 ```bash
-# From source
 git clone https://github.com/lowplane/kerno.git
-cd kerno
-make build
+cd kerno && make build
 sudo ./bin/kerno doctor
 ```
 
+### Or run it in Docker
+
 ```bash
-# Docker
 docker run --privileged --pid=host \
   -v /sys/kernel/debug:/sys/kernel/debug:ro \
   -v /sys/fs/bpf:/sys/fs/bpf \
@@ -129,103 +192,237 @@ docker run --privileged --pid=host \
   ghcr.io/lowplane/kerno:latest doctor
 ```
 
-### Kubernetes
+### Or deploy on Kubernetes
 
 ```bash
-# Helm (recommended)
 helm install kerno ./deploy/helm/kerno \
   -n kerno-system --create-namespace
-
-# Or raw manifests
-kubectl apply -f deploy/k8s/
 ```
+
+---
+
+## How It Works
+
+Kerno runs as a lightweight agent. When you run `kerno doctor`, it loads six tiny eBPF programs into the kernel, collects 30 seconds of real data, runs it through 11 diagnostic rules, and gives you a ranked report. No sampling. No guesswork. Actual kernel data.
+
+### The Architecture
+
+```mermaid
+flowchart TB
+    subgraph Kernel["KERNEL SPACE · eBPF Programs"]
+        direction LR
+        P1["syscall<br/>latency"]
+        P2["tcp<br/>monitor"]
+        P3["oom<br/>track"]
+        P4["disk<br/>io"]
+        P5["sched<br/>delay"]
+        P6["fd<br/>track"]
+    end
+
+    RB[("Ring Buffers<br/>256KB per program<br/>zero-copy mmap")]
+
+    subgraph UserSpace["USER SPACE · Go"]
+        direction TB
+        Loader["BPF Loaders<br/>cilium/ebpf"]
+        Collector["Collectors<br/>percentile aggregation"]
+        Signals[("Signals Snapshot<br/>single source of truth")]
+        Adapter["Environment Adapter<br/>bare metal · systemd · k8s"]
+    end
+
+    subgraph Outputs["OUTPUTS"]
+        direction TB
+        Doctor["Doctor Engine<br/>11 diagnostic rules"]
+        AI["AI Layer <i>(optional)</i><br/>root cause analysis"]
+        Prom["Prometheus<br/>/metrics :9090"]
+        CLI["Terminal<br/>pretty · JSON"]
+    end
+
+    P1 & P2 & P3 & P4 & P5 & P6 --> RB
+    RB --> Loader
+    Loader --> Collector
+    Collector --> Signals
+    Adapter -.enriches.-> Signals
+    Signals --> Doctor
+    Signals --> Prom
+    Doctor --> AI
+    AI --> CLI
+    Doctor --> CLI
+
+    classDef kernel fill:#1a1a2e,stroke:#e94560,color:#fff,stroke-width:2px
+    classDef user fill:#0f3460,stroke:#16213e,color:#fff,stroke-width:2px
+    classDef output fill:#16213e,stroke:#533483,color:#fff,stroke-width:2px
+    classDef buffer fill:#533483,stroke:#e94560,color:#fff,stroke-width:3px
+    classDef ai fill:#e94560,stroke:#fff,color:#fff,stroke-width:2px
+
+    class P1,P2,P3,P4,P5,P6 kernel
+    class Loader,Collector,Signals,Adapter user
+    class Doctor,Prom,CLI output
+    class RB buffer
+    class AI ai
+```
+
+### The Data Flow
+
+```mermaid
+sequenceDiagram
+    participant K as Kernel<br/>(eBPF)
+    participant R as Ring Buffer
+    participant C as Collectors
+    participant D as Doctor Engine
+    participant A as AI Layer
+    participant U as You
+
+    K->>R: syscall/tcp/oom/io events
+    Note over K,R: Zero-copy, microsecond overhead
+    R->>C: drain events
+    C->>C: aggregate into p50/p95/p99
+    C->>D: Signals snapshot
+    D->>D: evaluate 11 rules
+    alt AI enabled
+        D->>A: findings + signals
+        A->>A: correlate + explain
+        A->>U: enhanced report
+    else AI disabled
+        D->>U: deterministic report
+    end
+```
+
+### What Kerno Detects
+
+```mermaid
+mindmap
+  root((Kerno<br/>Detects))
+    Performance
+      Slow syscalls
+      Disk I/O bottlenecks
+      CPU scheduler contention
+      High syscall error rate
+    Network
+      TCP retransmits
+      RTT degradation
+      Connection storms
+    Memory
+      OOM kills
+      Memory pressure
+      OOM imminent warnings
+    Resource Leaks
+      FD leaks with ETA
+      Process growth
+```
+
+---
+
+## The Diagnostic Rules
+
+Kerno runs 11 deterministic rules against every snapshot. Every rule is explainable, configurable, and tested.
+
+| # | Rule | Triggers When | Severity |
+|---|------|---------------|:---:|
+| 1 | Disk I/O Bottleneck | fsync p99 > 50ms or write p99 > 200ms | WARN / CRIT |
+| 2 | OOM Kill Occurred | Any OOM event in window | CRIT |
+| 3 | TCP Retransmit Storm | Retransmit rate > 2% | CRIT |
+| 4 | TCP RTT Degradation | RTT p99 > 10ms | WARN |
+| 5 | Scheduler Contention | Runqueue delay p99 > 5ms | WARN / CRIT |
+| 6 | FD Leak | FD growth > 10/sec sustained | WARN (with ETA) |
+| 7 | Syscall Latency High | Any syscall p99 > 100ms | WARN / CRIT |
+| 8 | OOM Imminent | Memory > 90% + positive growth | WARN / CRIT (with ETA) |
+| 9 | Syscall Error Rate | Error rate > 1% per syscall | WARN / CRIT |
+| 10 | Memory Pressure | RSS usage > 90% | WARN |
+| 11 | Network Latency | Connection RTT > 100ms | WARN |
+
+---
 
 ## Usage
 
-### Diagnostics
+### Diagnostics — "What's wrong right now?"
 
 ```bash
-# 30-second kernel diagnostic
+# The golden command: 30-second full diagnostic
 sudo kerno doctor
 
 # Quick 10-second check
 sudo kerno doctor --duration 10s
 
-# JSON output for CI/CD (exits 1 on critical findings)
+# JSON output for CI/CD (exits non-zero on critical findings)
 sudo kerno doctor --output json --exit-code
 
-# AI-powered analysis (requires KERNO_AI_API_KEY)
+# With AI-powered analysis
+export KERNO_AI_API_KEY="sk-..."
 sudo kerno doctor --ai
 
-# Explain a kernel error — no root needed
-kerno explain "BUG: kernel NULL pointer dereference, address: 0000000000000040"
-
-# Explain from dmesg
+# Explain a kernel error (no root needed)
+kerno explain "BUG: kernel NULL pointer dereference"
 dmesg | tail -5 | kerno explain
 
-# Predict upcoming failures
+# Predict failures before they happen
 sudo kerno predict --snapshots 5 --interval 15s
 ```
 
-### Real-Time Tracing
+### Real-Time Tracing — "Watch it happen"
 
 ```bash
-# Stream all syscall events
+# Stream every syscall event
 sudo kerno trace syscall
 
-# Filter by process
+# Only syscalls from PID 1234
 sudo kerno trace syscall --pid 1234
 
-# Filter by syscall name, JSON output
+# Only read() syscalls, as JSON
 sudo kerno trace syscall --filter read --output json
 
-# Top 10 syscalls by p99 latency (refreshing)
+# Top 10 syscalls by p99 latency (updates every second)
 sudo kerno trace syscall --top 10
 
-# Trace disk I/O for a specific process
-sudo kerno trace disk --process postgres
+# Disk I/O for postgres, writes over 5ms only
+sudo kerno trace disk --process postgres --op write --threshold 5ms
 
-# Only writes above 5ms
-sudo kerno trace disk --op write --threshold 5ms
-
-# Scheduler delays above 10ms
+# Scheduler delays > 10ms
 sudo kerno trace sched --threshold 10ms
-
-# Run for 60 seconds then exit
-sudo kerno trace syscall --duration 60s
 ```
 
-### Continuous Monitoring
+### Continuous Monitoring — "Let me know when..."
 
 ```bash
-# Watch TCP connections with retransmits
+# Watch TCP for any connections with retransmits
 sudo kerno watch tcp --retransmits
 
-# Only connections with RTT above 5ms
-sudo kerno watch tcp --threshold-rtt 5ms --output json
-
-# Watch for OOM kills with alert banner
+# Alert on any OOM kill
 sudo kerno watch oom --alert
 
-# Only OOM events with score above 500
-sudo kerno watch oom --threshold 500
-
-# Detect FD leaks (processes opening >10 FDs/sec)
+# Detect processes leaking FDs
 sudo kerno watch fd --threshold 10
 
-# Daemon mode with Prometheus metrics
+# Run as a daemon (Prometheus metrics on :9090)
 sudo kerno start
-
-# Custom Prometheus address
-sudo kerno start --prometheus-addr :9091
 ```
 
-### Prometheus Metrics
+---
 
-When running `kerno start`, the following metrics are exposed at `:9090/metrics`:
+## Prometheus Metrics
 
-| Metric | Type | Description |
-|---|---|---|
+When you run `sudo kerno start`, Kerno exposes 16 Prometheus metrics on port 9090:
+
+```mermaid
+flowchart LR
+    K[Kerno Agent] -->|:9090/metrics| P[Prometheus]
+    P --> G[Grafana Dashboards]
+    P --> A[Alertmanager]
+    A --> Slack
+    A --> PagerDuty
+
+    style K fill:#e94560,stroke:#fff,color:#fff
+    style P fill:#0f3460,stroke:#fff,color:#fff
+    style G fill:#16213e,stroke:#fff,color:#fff
+    style A fill:#16213e,stroke:#fff,color:#fff
+    style Slack fill:#533483,stroke:#fff,color:#fff
+    style PagerDuty fill:#533483,stroke:#fff,color:#fff
+```
+
+<details>
+<summary><b>View all 16 metrics</b></summary>
+
+| Metric | Type | What It Measures |
+|---|:---:|---|
 | `kerno_syscall_duration_nanoseconds` | Summary | Syscall latency (p50, p95, p99) |
 | `kerno_syscall_total` | Counter | Total syscall events |
 | `kerno_tcp_rtt_nanoseconds` | Summary | TCP round-trip time |
@@ -240,142 +437,76 @@ When running `kerno start`, the following metrics are exposed at `:9090/metrics`
 | `kerno_collector_events_total` | Counter | Events per collector |
 | `kerno_collector_errors_total` | Counter | Errors per collector |
 | `kerno_bpf_programs_loaded` | Gauge | Loaded eBPF programs |
-| `kerno_info` | Gauge | Build version info |
+| `kerno_info` | Gauge | Build version |
 
 Health endpoints: `/healthz` and `/readyz` return JSON status.
 
-## How It Works
+</details>
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                   KERNEL SPACE (eBPF)                       │
-│                                                             │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐      │
-│  │ syscall  │ │   tcp    │ │   oom    │ │ disk_io  │      │
-│  │ latency  │ │ monitor  │ │  track   │ │          │      │
-│  └────┬─────┘ └────┬─────┘ └────┬─────┘ └────┬─────┘      │
-│  ┌────┴─────┐ ┌────┴─────┐                                 │
-│  │  sched   │ │ fd_track │                                  │
-│  │  delay   │ │          │                                  │
-│  └────┬─────┘ └────┬─────┘                                  │
-│       │             │                                        │
-│       └──────┬──────┘                                        │
-│              ▼                                               │
-│     ┌─────────────────┐                                      │
-│     │   Ring Buffers   │  256KB per program, zero-copy       │
-│     └────────┬────────┘                                      │
-└──────────────┼──────────────────────────────────────────────┘
-               │
-               ▼
-┌──────────────────────────────────────────────────────────────┐
-│                  USER SPACE (Go)                             │
-│                                                              │
-│  ┌────────────────┐    ┌──────────────────┐                  │
-│  │  BPF Loaders   │───▶│  Metrics Bridge  │──▶ Prometheus    │
-│  │  (cilium/ebpf) │    │  (decode + feed) │    :9090/metrics │
-│  └───────┬────────┘    └──────────────────┘                  │
-│          │                                                    │
-│          ▼                                                    │
-│  ┌────────────────┐    ┌──────────────────┐                  │
-│  │   Collectors   │───▶│  Signals Struct  │                  │
-│  │  (aggregation) │    │  (single snapshot│                  │
-│  └────────────────┘    └───────┬──────────┘                  │
-│                                │                              │
-│                                ▼                              │
-│                   ┌──────────────────────┐                    │
-│                   │    Doctor Engine     │                    │
-│                   │   (11 diag rules)   │                    │
-│                   └──────────┬──────────┘                    │
-│                              │                                │
-│                              ▼                                │
-│                   ┌──────────────────────┐                    │
-│                   │  AI Layer (optional) │                    │
-│                   │  Anthropic / OpenAI  │                    │
-│                   │  Ollama (local)      │                    │
-│                   └──────────┬──────────┘                    │
-│                              │                                │
-│                              ▼                                │
-│                   ┌──────────────────────┐                    │
-│                   │  Output: terminal,   │                    │
-│                   │  JSON, Prometheus    │                    │
-│                   └──────────────────────┘                    │
-│                                                              │
-│  ┌─────────────────────────────────────────────┐             │
-│  │  Environment Adapter (auto-detected)        │             │
-│  │  bare metal │ systemd │ kubernetes           │             │
-│  │  Enriches events with hostname/pod/unit     │             │
-│  └─────────────────────────────────────────────┘             │
-└──────────────────────────────────────────────────────────────┘
-```
-
-Kerno uses **6 eBPF programs** attached to stable kernel tracepoints. Events flow through ring buffers to Go userspace, where they are aggregated into percentile distributions and analyzed by **11 diagnostic rules**. An optional **AI layer** enriches findings with cross-signal correlation and root cause analysis.
-
-### Environment Adapters
-
-Kerno automatically detects where it's running and enriches events:
-
-| Environment | Detection | Enrichment |
-|---|---|---|
-| **Bare metal** | Default fallback | hostname, cgroup path |
-| **Systemd** | `/proc/1/comm == systemd` | unit, slice, scope |
-| **Kubernetes** | Service account token present | pod, namespace, node, deployment |
-
-The K8s adapter maps cgroup paths to pod metadata via the Kubelet read-only API with a local cache refreshed every 30 seconds.
-
-### AI Integration
-
-AI sits **after** the deterministic rule engine — it enriches, never replaces:
-
-- **3 providers:** Anthropic Claude, OpenAI, Ollama (local/air-gapped)
-- **Privacy modes:** `full`, `redacted`, `summary` (default — only aggregates sent to LLM)
-- **No LLM SDKs** — all providers use raw `net/http`
-- **Graceful degradation** — AI failures are non-fatal, rule engine always works
-- **Rate limiting + caching** — prevent excessive API calls in continuous mode
-
-```bash
-# Configure AI
-export KERNO_AI_API_KEY="sk-..."
-export KERNO_AI_PROVIDER="anthropic"  # or "openai" or "ollama"
-
-sudo kerno doctor --ai
-```
-
-## Diagnostic Rules
-
-| # | Rule | Trigger | Severity |
-|---|------|---------|----------|
-| 1 | Disk I/O Bottleneck | fsync P99 > 50ms or write P99 > 200ms | WARNING / CRITICAL |
-| 2 | OOM Kill Occurred | Any OOM event in window | CRITICAL |
-| 3 | TCP Retransmit Storm | Retransmit rate > 2% | CRITICAL |
-| 4 | TCP RTT Degradation | RTT P99 > 10ms | WARNING |
-| 5 | Scheduler Contention | Runqueue delay P99 > 5ms | WARNING / CRITICAL |
-| 6 | FD Leak | FD growth > 10/sec sustained | WARNING (with ETA) |
-| 7 | Syscall Latency High | Any syscall P99 > 100ms | WARNING / CRITICAL |
-| 8 | OOM Imminent | Memory > 90% + positive growth | WARNING / CRITICAL (with ETA) |
-| 9 | Syscall Error Rate | Error rate > 1% per syscall | WARNING / CRITICAL |
-| 10 | Memory Pressure | RSS usage > 90% | WARNING |
-| 11 | Network Latency | Connection RTT > 100ms | WARNING |
+---
 
 ## Kubernetes Deployment
 
-### Helm (Recommended)
+Kerno auto-detects Kubernetes and enriches every event with pod, namespace, node, and deployment labels — no client-go dependency, no heavyweight informers.
+
+```mermaid
+flowchart TB
+    subgraph Cluster["Kubernetes Cluster"]
+        direction TB
+        subgraph Node1["Worker Node 1"]
+            K1["Kerno Pod<br/><i>DaemonSet</i>"]
+            W1["Workload Pods"]
+        end
+        subgraph Node2["Worker Node 2"]
+            K2["Kerno Pod<br/><i>DaemonSet</i>"]
+            W2["Workload Pods"]
+        end
+        subgraph Node3["Worker Node N"]
+            K3["Kerno Pod<br/><i>DaemonSet</i>"]
+            W3["Workload Pods"]
+        end
+    end
+
+    K1 -->|:9090/metrics| Prom["Prometheus"]
+    K2 -->|:9090/metrics| Prom
+    K3 -->|:9090/metrics| Prom
+    Prom --> GF["Grafana"]
+
+    K1 -.enriches.-> W1
+    K2 -.enriches.-> W2
+    K3 -.enriches.-> W3
+
+    style K1 fill:#e94560,stroke:#fff,color:#fff
+    style K2 fill:#e94560,stroke:#fff,color:#fff
+    style K3 fill:#e94560,stroke:#fff,color:#fff
+    style Prom fill:#0f3460,stroke:#fff,color:#fff
+    style GF fill:#16213e,stroke:#fff,color:#fff
+    style W1 fill:#533483,stroke:#fff,color:#fff
+    style W2 fill:#533483,stroke:#fff,color:#fff
+    style W3 fill:#533483,stroke:#fff,color:#fff
+```
+
+### Install with Helm
 
 ```bash
 helm install kerno ./deploy/helm/kerno \
   -n kerno-system --create-namespace
 ```
 
-Customize via `values.yaml`:
+### Customize via values.yaml
 
 ```yaml
-# Custom resource limits
+image:
+  repository: ghcr.io/lowplane/kerno
+  tag: latest
+
 resources:
-  requests:
-    cpu: 100m
-    memory: 128Mi
-  limits:
-    cpu: "1"
-    memory: 512Mi
+  requests: { cpu: 100m, memory: 128Mi }
+  limits:   { cpu: "1",  memory: 512Mi }
+
+prometheus:
+  enabled: true
+  port: 9090
 
 # Enable Prometheus Operator ServiceMonitor
 serviceMonitor:
@@ -385,52 +516,96 @@ serviceMonitor:
 # Restrict to specific nodes
 nodeSelector:
   monitoring: "true"
-
-# Custom Prometheus port
-prometheus:
-  port: 9091
 ```
 
-```bash
-helm upgrade kerno ./deploy/helm/kerno \
-  -n kerno-system -f my-values.yaml
-```
-
-### Raw Manifests
+### Verify the deployment
 
 ```bash
-kubectl apply -f deploy/k8s/namespace.yaml
-kubectl apply -f deploy/k8s/rbac.yaml
-kubectl apply -f deploy/k8s/daemonset.yaml
-kubectl apply -f deploy/k8s/service.yaml
-
-# Optional: Prometheus Operator ServiceMonitor
-kubectl apply -f deploy/k8s/servicemonitor.yaml
-
-# Optional: PodDisruptionBudget
-kubectl apply -f deploy/k8s/pdb.yaml
-```
-
-### Verify Deployment
-
-```bash
-# Check DaemonSet status
 kubectl -n kerno-system get ds kerno
-
-# Check pod logs
 kubectl -n kerno-system logs -l app.kubernetes.io/name=kerno
-
-# Scrape metrics
 kubectl -n kerno-system port-forward ds/kerno 9090:9090
 curl localhost:9090/metrics
 ```
 
+### Raw manifests
+
+If you don't use Helm, apply the manifests directly:
+
+```bash
+kubectl apply -f deploy/k8s/
+```
+
+---
+
+## Environment Adapters
+
+Kerno detects where it's running and enriches events automatically:
+
+```mermaid
+flowchart LR
+    Start([Kerno starts]) --> Q1{K8s service<br/>account token?}
+    Q1 -->|Yes| K8s[Kubernetes Adapter<br/>pod · namespace · node · deployment]
+    Q1 -->|No| Q2{systemd<br/>init process?}
+    Q2 -->|Yes| SD[Systemd Adapter<br/>unit · slice · scope]
+    Q2 -->|No| BM[Bare Metal Adapter<br/>hostname · cgroup]
+
+    style Start fill:#e94560,stroke:#fff,color:#fff
+    style K8s fill:#0f3460,stroke:#fff,color:#fff
+    style SD fill:#0f3460,stroke:#fff,color:#fff
+    style BM fill:#0f3460,stroke:#fff,color:#fff
+    style Q1 fill:#16213e,stroke:#fff,color:#fff
+    style Q2 fill:#16213e,stroke:#fff,color:#fff
+```
+
+---
+
+## AI Integration (Optional)
+
+Kerno's AI layer sits **after** the deterministic rule engine. It enriches findings with cross-signal correlation and root cause explanations — it never replaces the rules.
+
+```mermaid
+flowchart LR
+    R[Rule Engine<br/>always runs] -->|findings| Decision{AI<br/>enabled?}
+    Decision -->|No| Out1[Deterministic Report]
+    Decision -->|Yes| Cache{In cache?}
+    Cache -->|Yes| Out2[Enriched Report]
+    Cache -->|No| Rate{Rate limit<br/>OK?}
+    Rate -->|No| Out3[Fallback Template]
+    Rate -->|Yes| LLM[LLM Provider<br/>Anthropic · OpenAI · Ollama]
+    LLM -->|success| Out2
+    LLM -->|failure| Out3
+
+    style R fill:#0f3460,stroke:#fff,color:#fff
+    style LLM fill:#e94560,stroke:#fff,color:#fff
+    style Out1 fill:#16213e,stroke:#fff,color:#fff
+    style Out2 fill:#16213e,stroke:#fff,color:#fff
+    style Out3 fill:#16213e,stroke:#fff,color:#fff
+    style Decision fill:#533483,stroke:#fff,color:#fff
+    style Cache fill:#533483,stroke:#fff,color:#fff
+    style Rate fill:#533483,stroke:#fff,color:#fff
+```
+
+**Features:**
+
+- 3 providers: **Anthropic Claude**, **OpenAI**, **Ollama** (local / air-gapped)
+- 3 privacy modes: `full` / `redacted` / `summary` (default)
+- No LLM SDK dependencies — pure `net/http`
+- Graceful degradation — failures fall back to a deterministic template
+- Token-bucket rate limiting + TTL cache
+
+```bash
+export KERNO_AI_API_KEY="sk-..."
+export KERNO_AI_PROVIDER="anthropic"   # or openai, ollama
+sudo kerno doctor --ai
+```
+
+---
+
 ## Configuration
 
-Zero config required. For custom setups:
+Kerno works with **zero configuration**. For custom setups, create `/etc/kerno/config.yaml`:
 
 ```yaml
-# /etc/kerno/config.yaml
 log_level: info
 log_format: text
 
@@ -445,15 +620,15 @@ collectors:
 doctor:
   duration: 30s
   thresholds:
-    syscall_p99_warning_ns: 100000000   # 100ms
-    syscall_p99_critical_ns: 500000000  # 500ms
-    tcp_retransmit_pct: 2.0             # 2%
-    oom_memory_pct: 90.0                # 90%
-    disk_p99_warning_ns: 50000000       # 50ms
-    disk_p99_critical_ns: 200000000     # 200ms
-    sched_delay_warning_ns: 5000000     # 5ms
-    sched_delay_critical_ns: 20000000   # 20ms
-    fd_growth_per_sec: 10.0
+    syscall_p99_warning_ns:  100000000   # 100ms
+    syscall_p99_critical_ns: 500000000   # 500ms
+    tcp_retransmit_pct:      2.0         # 2%
+    oom_memory_pct:          90.0        # 90%
+    disk_p99_warning_ns:     50000000    # 50ms
+    disk_p99_critical_ns:    200000000   # 200ms
+    sched_delay_warning_ns:  5000000     # 5ms
+    sched_delay_critical_ns: 20000000    # 20ms
+    fd_growth_per_sec:       10.0
 
 prometheus:
   enabled: true
@@ -461,86 +636,82 @@ prometheus:
 
 ai:
   enabled: false
-  provider: anthropic       # anthropic, openai, ollama
-  privacy_mode: summary     # full, redacted, summary
-  cache_ttl: 5m
-  rate_limit_per_minute: 10
+  provider: anthropic
+  privacy_mode: summary
 ```
 
-Environment variables override config: `KERNO_LOG_LEVEL=debug`, `KERNO_AI_API_KEY=sk-...`, etc.
+**Precedence:** CLI flags > environment variables (`KERNO_*`) > config file > defaults.
+
+---
 
 ## Building from Source
 
 ```bash
 # Requirements: Go 1.25+
-# Optional for eBPF: clang 14+, libbpf-dev, llvm
+# Optional for real eBPF: clang 14+, libbpf-dev, llvm
 
-# Build (uses stub BPF — works without clang)
-make build
-
-# Full build with eBPF compilation
-make bpf && make build
-
-# Run tests
-make test
-
-# Run tests with race detector
-make test-race
-
-# Run linter
-make lint
-
-# All quality checks (vet + test + lint)
-make check
-
-# Build Docker image
-make docker
+make build          # Build binary (uses BPF stubs — no clang needed)
+make bpf            # Compile eBPF C programs
+make test           # Run unit tests
+make test-race      # Run with race detector
+make lint           # golangci-lint
+make check          # Full CI check: vet + test + lint
+make docker         # Build Docker image
 ```
+
+---
 
 ## Project Structure
 
 ```
 kerno/
-├── cmd/kerno/              # Binary entry point
+├── cmd/kerno/              Binary entry point
 ├── internal/
-│   ├── adapter/            # Environment adapters (baremetal, systemd, k8s)
-│   ├── ai/                 # LLM provider abstraction (3 backends)
-│   ├── bpf/                # eBPF loaders + Go event types
-│   │   └── c/              # eBPF C programs + headers
-│   ├── cli/                # Cobra CLI commands
-│   ├── collector/           # Signal collection + aggregation
-│   ├── config/              # Typed configuration (Viper)
-│   ├── doctor/              # Diagnostic engine (rules + renderers)
-│   ├── metrics/             # Prometheus metrics registry + bridge
-│   └── version/             # Build metadata
+│   ├── adapter/            Environment adapters (baremetal, systemd, k8s)
+│   ├── ai/                 LLM provider abstraction
+│   ├── bpf/                eBPF loaders + Go event types
+│   │   └── c/              eBPF C programs + headers
+│   ├── cli/                Cobra CLI commands
+│   ├── collector/          Signal collection + aggregation
+│   ├── config/             Typed configuration (Viper)
+│   ├── doctor/             Diagnostic engine (rules + renderers)
+│   ├── metrics/            Prometheus metrics registry + bridge
+│   └── version/            Build metadata
 ├── deploy/
-│   ├── k8s/                # Raw Kubernetes manifests
-│   └── helm/kerno/         # Helm chart
-├── docs/                    # Architecture documentation
-├── Dockerfile               # Multi-stage container build
-├── Makefile                 # Build orchestration
-└── .goreleaser.yml          # Release automation
+│   ├── k8s/                Raw Kubernetes manifests
+│   └── helm/kerno/         Helm chart
+├── docs/                   Architecture documentation
+├── Dockerfile              Multi-stage container build
+└── Makefile                Build orchestration
 ```
 
-For detailed architecture documentation, see [docs/architecture.md](docs/architecture.md).
+For detailed architecture, see [docs/architecture.md](docs/architecture.md).
+
+---
 
 ## Contributing
 
-Contributions welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for:
+Contributions welcome. See [CONTRIBUTING.md](CONTRIBUTING.md) for:
 
 - Development setup and prerequisites
 - Commit message conventions (Conventional Commits)
 - Code review process
 - DCO sign-off requirement
 
-## Security
+For security reports, see [SECURITY.md](SECURITY.md).
 
-For vulnerability reports, see [SECURITY.md](SECURITY.md).
+---
 
 ## License
 
 Apache License 2.0 — see [LICENSE](LICENSE).
 
+<div align="center">
+
 ---
 
 **Kerno** is built by [Shivam Kumar](https://github.com/btwshivam) at [Lowplane](https://github.com/lowplane).
+
+If Kerno saved your Sunday, consider leaving a **star** — it helps other engineers find the project.
+
+</div>
