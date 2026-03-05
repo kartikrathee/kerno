@@ -4,7 +4,7 @@
 
 ### The doctor for your Linux kernel
 
-**Know what's wrong with your server in 30 seconds — in plain English.**
+**Know what's wrong with your server in 30 seconds - in plain English.**
 
 [![CI](https://github.com/lowplane/kerno/actions/workflows/ci.yml/badge.svg)](https://github.com/lowplane/kerno/actions/workflows/ci.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/lowplane/kerno)](https://goreportcard.com/report/github.com/lowplane/kerno)
@@ -20,13 +20,13 @@
 
 ## What is Kerno?
 
-Imagine your Linux server is feeling sick. Something is slow, something is breaking, but you don't know what. You check CPU — looks fine. Memory — fine. Your dashboards are green. But users are complaining.
+Imagine your Linux server is feeling sick. Something is slow, something is breaking, but you don't know what. You check CPU - looks fine. Memory - fine. Your dashboards are green. But users are complaining.
 
-**That's because your dashboards live at the application layer. The real problem is happening deep inside the kernel — and nothing is looking there.**
+**That's because your dashboards live at the application layer. The real problem is happening deep inside the kernel - and nothing is looking there.**
 
 Kerno looks there.
 
-It watches the Linux kernel in real time using eBPF — the same technology Netflix and Meta use to diagnose their servers — and tells you exactly what's wrong in plain English. No PhD required.
+It watches the Linux kernel in real time using eBPF - the same technology Netflix and Meta use to diagnose their servers - and tells you exactly what's wrong in plain English. No PhD required.
 
 ```bash
 sudo kerno doctor
@@ -58,7 +58,7 @@ Kernel:   6.8.0-generic
  !!  CRITICAL  Disk I/O Bottleneck Detected
      ─────────────────────────────────────
      Signal:   sync P99=280ms (threshold: 200ms), 3,241 sync ops
-     Cause:    Storage device is saturated — fsync operations blocking
+     Cause:    Storage device is saturated - fsync operations blocking
      Impact:   Database writes and file syncs are delayed
      Fix:      iostat -x 1 5
                Consider faster storage or write batching
@@ -85,9 +85,9 @@ Kernel:   6.8.0-generic
 
 ## Why Kerno Exists
 
-> **The kernel knows before anyone else.** When disk gets slow, when the network starts dropping packets, when memory is about to run out — the kernel sees it first. Minutes before your dashboards. Hours before your users.
+> **The kernel knows before anyone else.** When disk gets slow, when the network starts dropping packets, when memory is about to run out - the kernel sees it first. Minutes before your dashboards. Hours before your users.
 
-Every observability tool you already use watches your *application*. Kerno watches the *kernel* — the layer underneath everything.
+Every observability tool you already use watches your *application*. Kerno watches the *kernel* - the layer underneath everything.
 
 ```mermaid
 flowchart TB
@@ -134,32 +134,32 @@ flowchart TB
 
 ### Diagnostics
 
-- **`kerno doctor`** — 30-second full diagnostic with ranked findings and fix suggestions
-- **`kerno explain`** — AI-powered kernel error explanation (no root needed)
-- **`kerno predict`** — Predict failures before they happen via trend analysis
+- **`kerno doctor`** - 30-second full diagnostic with ranked findings and fix suggestions
+- **`kerno explain`** - AI-powered kernel error explanation (no root needed)
+- **`kerno predict`** - Predict failures before they happen via trend analysis
 
 ### Real-Time Tracing
 
-- **`kerno trace syscall`** — Per-process syscall latency streaming
-- **`kerno trace disk`** — Block I/O latency by device, operation, process
-- **`kerno trace sched`** — CPU scheduler run queue delays
+- **`kerno trace syscall`** - Per-process syscall latency streaming
+- **`kerno trace disk`** - Block I/O latency by device, operation, process
+- **`kerno trace sched`** - CPU scheduler run queue delays
 
 </td>
 <td width="50%" valign="top">
 
 ### Continuous Monitoring
 
-- **`kerno watch tcp`** — TCP connections, RTT, retransmits
-- **`kerno watch oom`** — OOM kill alerts with full context
-- **`kerno watch fd`** — FD leak detection via growth rate
-- **`kerno start`** — Daemon mode with Prometheus metrics
+- **`kerno watch tcp`** - TCP connections, RTT, retransmits
+- **`kerno watch oom`** - OOM kill alerts with full context
+- **`kerno watch fd`** - FD leak detection via growth rate
+- **`kerno start`** - Daemon mode with Prometheus metrics
 
 ### Integrations
 
-- **Prometheus** — 16 metrics at `/metrics`
-- **Kubernetes** — Helm chart + pod enrichment
-- **AI Providers** — Anthropic, OpenAI, Ollama (optional)
-- **Systemd** — Unit/slice enrichment on bare metal
+- **Prometheus** - 16 metrics at `/metrics`
+- **Kubernetes** - Helm chart + pod enrichment
+- **AI Providers** - Anthropic, OpenAI, Ollama (optional)
+- **Systemd** - Unit/slice enrichment on bare metal
 
 </td>
 </tr>
@@ -287,29 +287,6 @@ sequenceDiagram
     end
 ```
 
-### What Kerno Detects
-
-```mermaid
-mindmap
-  root((Kerno<br/>Detects))
-    Performance
-      Slow syscalls
-      Disk I/O bottlenecks
-      CPU scheduler contention
-      High syscall error rate
-    Network
-      TCP retransmits
-      RTT degradation
-      Connection storms
-    Memory
-      OOM kills
-      Memory pressure
-      OOM imminent warnings
-    Resource Leaks
-      FD leaks with ETA
-      Process growth
-```
-
 ---
 
 ## The Diagnostic Rules
@@ -334,7 +311,7 @@ Kerno runs 11 deterministic rules against every snapshot. Every rule is explaina
 
 ## Usage
 
-### Diagnostics — "What's wrong right now?"
+### Diagnostics - "What's wrong right now?"
 
 ```bash
 # The golden command: 30-second full diagnostic
@@ -358,7 +335,7 @@ dmesg | tail -5 | kerno explain
 sudo kerno predict --snapshots 5 --interval 15s
 ```
 
-### Real-Time Tracing — "Watch it happen"
+### Real-Time Tracing - "Watch it happen"
 
 ```bash
 # Stream every syscall event
@@ -380,7 +357,7 @@ sudo kerno trace disk --process postgres --op write --threshold 5ms
 sudo kerno trace sched --threshold 10ms
 ```
 
-### Continuous Monitoring — "Let me know when..."
+### Continuous Monitoring - "Let me know when..."
 
 ```bash
 # Watch TCP for any connections with retransmits
@@ -400,23 +377,7 @@ sudo kerno start
 
 ## Prometheus Metrics
 
-When you run `sudo kerno start`, Kerno exposes 16 Prometheus metrics on port 9090:
-
-```mermaid
-flowchart LR
-    K[Kerno Agent] -->|:9090/metrics| P[Prometheus]
-    P --> G[Grafana Dashboards]
-    P --> A[Alertmanager]
-    A --> Slack
-    A --> PagerDuty
-
-    style K fill:#e94560,stroke:#fff,color:#fff
-    style P fill:#0f3460,stroke:#fff,color:#fff
-    style G fill:#16213e,stroke:#fff,color:#fff
-    style A fill:#16213e,stroke:#fff,color:#fff
-    style Slack fill:#533483,stroke:#fff,color:#fff
-    style PagerDuty fill:#533483,stroke:#fff,color:#fff
-```
+When you run `sudo kerno start`, Kerno exposes 16 Prometheus metrics at `:9090/metrics` - scrape it with Prometheus, visualize in Grafana, alert via Alertmanager.
 
 <details>
 <summary><b>View all 16 metrics</b></summary>
@@ -447,7 +408,7 @@ Health endpoints: `/healthz` and `/readyz` return JSON status.
 
 ## Kubernetes Deployment
 
-Kerno auto-detects Kubernetes and enriches every event with pod, namespace, node, and deployment labels — no client-go dependency, no heavyweight informers.
+Kerno auto-detects Kubernetes and enriches every event with pod, namespace, node, and deployment labels - no client-go dependency, no heavyweight informers.
 
 ```mermaid
 flowchart TB
@@ -537,61 +498,15 @@ kubectl apply -f deploy/k8s/
 
 ---
 
-## Environment Adapters
+## Environment & AI
 
-Kerno detects where it's running and enriches events automatically:
+**Environment auto-detection.** On start, Kerno picks one of three adapters and enriches every event - no configuration required:
 
-```mermaid
-flowchart LR
-    Start([Kerno starts]) --> Q1{K8s service<br/>account token?}
-    Q1 -->|Yes| K8s[Kubernetes Adapter<br/>pod · namespace · node · deployment]
-    Q1 -->|No| Q2{systemd<br/>init process?}
-    Q2 -->|Yes| SD[Systemd Adapter<br/>unit · slice · scope]
-    Q2 -->|No| BM[Bare Metal Adapter<br/>hostname · cgroup]
+- **Kubernetes** (token present) → pod, namespace, node, deployment
+- **Systemd** (PID 1 is systemd) → unit, slice, scope
+- **Bare metal** → hostname, cgroup path
 
-    style Start fill:#e94560,stroke:#fff,color:#fff
-    style K8s fill:#0f3460,stroke:#fff,color:#fff
-    style SD fill:#0f3460,stroke:#fff,color:#fff
-    style BM fill:#0f3460,stroke:#fff,color:#fff
-    style Q1 fill:#16213e,stroke:#fff,color:#fff
-    style Q2 fill:#16213e,stroke:#fff,color:#fff
-```
-
----
-
-## AI Integration (Optional)
-
-Kerno's AI layer sits **after** the deterministic rule engine. It enriches findings with cross-signal correlation and root cause explanations — it never replaces the rules.
-
-```mermaid
-flowchart LR
-    R[Rule Engine<br/>always runs] -->|findings| Decision{AI<br/>enabled?}
-    Decision -->|No| Out1[Deterministic Report]
-    Decision -->|Yes| Cache{In cache?}
-    Cache -->|Yes| Out2[Enriched Report]
-    Cache -->|No| Rate{Rate limit<br/>OK?}
-    Rate -->|No| Out3[Fallback Template]
-    Rate -->|Yes| LLM[LLM Provider<br/>Anthropic · OpenAI · Ollama]
-    LLM -->|success| Out2
-    LLM -->|failure| Out3
-
-    style R fill:#0f3460,stroke:#fff,color:#fff
-    style LLM fill:#e94560,stroke:#fff,color:#fff
-    style Out1 fill:#16213e,stroke:#fff,color:#fff
-    style Out2 fill:#16213e,stroke:#fff,color:#fff
-    style Out3 fill:#16213e,stroke:#fff,color:#fff
-    style Decision fill:#533483,stroke:#fff,color:#fff
-    style Cache fill:#533483,stroke:#fff,color:#fff
-    style Rate fill:#533483,stroke:#fff,color:#fff
-```
-
-**Features:**
-
-- 3 providers: **Anthropic Claude**, **OpenAI**, **Ollama** (local / air-gapped)
-- 3 privacy modes: `full` / `redacted` / `summary` (default)
-- No LLM SDK dependencies — pure `net/http`
-- Graceful degradation — failures fall back to a deterministic template
-- Token-bucket rate limiting + TTL cache
+**AI (optional).** The AI layer runs **after** the deterministic rule engine - it enriches findings with cross-signal correlation and root cause explanations, never replaces them. Three providers (**Anthropic**, **OpenAI**, **Ollama** for air-gapped), three privacy modes (`full` / `redacted` / `summary`), TTL cache + token-bucket rate limiting, and graceful fallback to a deterministic template on failure. No LLM SDK dependencies - pure `net/http`.
 
 ```bash
 export KERNO_AI_API_KEY="sk-..."
@@ -650,7 +565,7 @@ ai:
 # Requirements: Go 1.25+
 # Optional for real eBPF: clang 14+, libbpf-dev, llvm
 
-make build          # Build binary (uses BPF stubs — no clang needed)
+make build          # Build binary (uses BPF stubs - no clang needed)
 make bpf            # Compile eBPF C programs
 make test           # Run unit tests
 make test-race      # Run with race detector
@@ -658,34 +573,6 @@ make lint           # golangci-lint
 make check          # Full CI check: vet + test + lint
 make docker         # Build Docker image
 ```
-
----
-
-## Project Structure
-
-```
-kerno/
-├── cmd/kerno/              Binary entry point
-├── internal/
-│   ├── adapter/            Environment adapters (baremetal, systemd, k8s)
-│   ├── ai/                 LLM provider abstraction
-│   ├── bpf/                eBPF loaders + Go event types
-│   │   └── c/              eBPF C programs + headers
-│   ├── cli/                Cobra CLI commands
-│   ├── collector/          Signal collection + aggregation
-│   ├── config/             Typed configuration (Viper)
-│   ├── doctor/             Diagnostic engine (rules + renderers)
-│   ├── metrics/            Prometheus metrics registry + bridge
-│   └── version/            Build metadata
-├── deploy/
-│   ├── k8s/                Raw Kubernetes manifests
-│   └── helm/kerno/         Helm chart
-├── docs/                   Architecture documentation
-├── Dockerfile              Multi-stage container build
-└── Makefile                Build orchestration
-```
-
-For detailed architecture, see [docs/architecture.md](docs/architecture.md).
 
 ---
 
@@ -704,14 +591,14 @@ For security reports, see [SECURITY.md](SECURITY.md).
 
 ## License
 
-Apache License 2.0 — see [LICENSE](LICENSE).
+Apache License 2.0 - see [LICENSE](LICENSE).
 
 <div align="center">
 
 ---
 
-**Kerno** is built by [Shivam Kumar](https://github.com/btwshivam) at [Lowplane](https://github.com/lowplane).
+**Kerno** is built by [Shivam](https://github.com/btwshivam) at [Lowplane](https://github.com/lowplane).
 
-If Kerno saved your Sunday, consider leaving a **star** — it helps other engineers find the project.
+If Kerno saved your Sunday, consider leaving a **star** - it helps other engineers find the project.
 
 </div>

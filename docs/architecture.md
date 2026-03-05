@@ -1,6 +1,6 @@
 # Kerno Architecture Guide
 
-> A complete walkthrough of Kerno's implementation — from kernel-level eBPF programs to AI-powered diagnostics.
+> A complete walkthrough of Kerno's implementation - from kernel-level eBPF programs to AI-powered diagnostics.
 > Written for the developer who wants to understand every layer.
 
 ---
@@ -10,7 +10,7 @@
 1. [What Is Kerno?](#1-what-is-kerno)
 2. [The Big Picture](#2-the-big-picture)
 3. [Repository Layout](#3-repository-layout)
-4. [Layer 1 — eBPF Programs (The Kernel Side)](#4-layer-1--ebpf-programs-the-kernel-side)
+4. [Layer 1 - eBPF Programs (The Kernel Side)](#4-layer-1--ebpf-programs-the-kernel-side)
    - [4.1 How eBPF Works](#41-how-ebpf-works)
    - [4.2 The Shared Header: kerno.h](#42-the-shared-header-kernoh)
    - [4.3 Program: syscall_latency.c](#43-program-syscall_latencyc)
@@ -19,25 +19,25 @@
    - [4.6 Program: disk_io.c](#46-program-disk_ioc)
    - [4.7 Program: sched_delay.c](#47-program-sched_delayc)
    - [4.8 Program: fd_track.c](#48-program-fd_trackc)
-5. [Layer 2 — Go BPF Loaders (Kernel-to-Userspace Bridge)](#5-layer-2--go-bpf-loaders-kernel-to-userspace-bridge)
+5. [Layer 2 - Go BPF Loaders (Kernel-to-Userspace Bridge)](#5-layer-2--go-bpf-loaders-kernel-to-userspace-bridge)
    - [5.1 The Loader Interface](#51-the-loader-interface)
    - [5.2 How bpf2go Code Generation Works](#52-how-bpf2go-code-generation-works)
    - [5.3 The Stub System (Building Without Clang)](#53-the-stub-system-building-without-clang)
    - [5.4 Event Types in Go](#54-event-types-in-go)
    - [5.5 LoaderSet: Managing Multiple Programs](#55-loaderset-managing-multiple-programs)
-6. [Layer 3 — Collector Framework (Aggregation)](#6-layer-3--collector-framework-aggregation)
+6. [Layer 3 - Collector Framework (Aggregation)](#6-layer-3--collector-framework-aggregation)
    - [6.1 The Collector Interface](#61-the-collector-interface)
    - [6.2 The Registry](#62-the-registry)
    - [6.3 The Signals Struct](#63-the-signals-struct)
    - [6.4 Snapshot Types](#64-snapshot-types)
-7. [Layer 4 — Doctor Engine (Diagnostics)](#7-layer-4--doctor-engine-diagnostics)
+7. [Layer 4 - Doctor Engine (Diagnostics)](#7-layer-4--doctor-engine-diagnostics)
    - [7.1 The Engine Orchestrator](#71-the-engine-orchestrator)
    - [7.2 All 11 Diagnostic Rules (Deep Dive)](#72-all-11-diagnostic-rules-deep-dive)
    - [7.3 Finding Struct and Ranking Algorithm](#73-finding-struct-and-ranking-algorithm)
    - [7.4 The Report Struct](#74-the-report-struct)
    - [7.5 Renderers: Pretty and JSON](#75-renderers-pretty-and-json)
    - [7.6 Prediction Engine](#76-prediction-engine)
-8. [Layer 5 — AI Analysis (Optional Enrichment)](#8-layer-5--ai-analysis-optional-enrichment)
+8. [Layer 5 - AI Analysis (Optional Enrichment)](#8-layer-5--ai-analysis-optional-enrichment)
    - [8.1 Architecture: Why AI is a Post-Processing Layer](#81-architecture-why-ai-is-a-post-processing-layer)
    - [8.2 The Provider Interface](#82-the-provider-interface)
    - [8.3 Anthropic, OpenAI, Ollama Providers](#83-anthropic-openai-ollama-providers)
@@ -46,15 +46,15 @@
    - [8.6 Privacy Modes](#86-privacy-modes)
    - [8.7 Caching and Rate Limiting](#87-caching-and-rate-limiting)
    - [8.8 Fallback Analyzer (No LLM Required)](#88-fallback-analyzer-no-llm-required)
-9. [Layer 6 — CLI (User Interface)](#9-layer-6--cli-user-interface)
+9. [Layer 6 - CLI (User Interface)](#9-layer-6--cli-user-interface)
    - [9.1 Root Command and Global Flags](#91-root-command-and-global-flags)
-   - [9.2 kerno doctor — The Main Event](#92-kerno-doctor--the-main-event)
-   - [9.3 kerno trace — Real-Time Event Streaming](#93-kerno-trace--real-time-event-streaming)
-   - [9.4 kerno watch — Aggregated Monitoring](#94-kerno-watch--aggregated-monitoring)
-   - [9.5 kerno start — Daemon Mode](#95-kerno-start--daemon-mode)
-   - [9.6 kerno predict — Failure Prediction](#96-kerno-predict--failure-prediction)
-   - [9.7 kerno explain — AI Error Explainer](#97-kerno-explain--ai-error-explainer)
-10. [Layer 7 — Configuration](#10-layer-7--configuration)
+   - [9.2 kerno doctor - The Main Event](#92-kerno-doctor--the-main-event)
+   - [9.3 kerno trace - Real-Time Event Streaming](#93-kerno-trace--real-time-event-streaming)
+   - [9.4 kerno watch - Aggregated Monitoring](#94-kerno-watch--aggregated-monitoring)
+   - [9.5 kerno start - Daemon Mode](#95-kerno-start--daemon-mode)
+   - [9.6 kerno predict - Failure Prediction](#96-kerno-predict--failure-prediction)
+   - [9.7 kerno explain - AI Error Explainer](#97-kerno-explain--ai-error-explainer)
+10. [Layer 7 - Configuration](#10-layer-7--configuration)
     - [10.1 Config Struct and Defaults](#101-config-struct-and-defaults)
     - [10.2 Precedence: Flags > Env > File > Defaults](#102-precedence-flags--env--file--defaults)
     - [10.3 Validation](#103-validation)
@@ -79,7 +79,7 @@ Kerno is an **eBPF-based kernel observability engine** for Linux. It attaches ti
 | **Scheduler Delays** | Time processes wait on CPU run queue | CPU contention = response time spikes |
 | **FD Tracking** | File descriptor opens/closes per process | FD leaks → eventual process crash |
 
-The flagship command is `sudo kerno doctor` — it collects signals for 30 seconds, evaluates them against diagnostic rules, and prints a ranked report of findings.
+The flagship command is `sudo kerno doctor` - it collects signals for 30 seconds, evaluates them against diagnostic rules, and prints a ranked report of findings.
 
 ---
 
@@ -224,7 +224,7 @@ kerno/
 
 ---
 
-## 4. Layer 1 — eBPF Programs (The Kernel Side)
+## 4. Layer 1 - eBPF Programs (The Kernel Side)
 
 ### 4.1 How eBPF Works
 
@@ -268,17 +268,17 @@ Every eBPF program includes `kerno.h`, which defines:
 #define KERNO_HASH(name, ...) ... // Hash map for state tracking
 ```
 
-Each event struct is defined here AND mirrored exactly in Go (`events.go`). Field order, sizes, and padding must be identical — the kernel writes raw bytes and Go reads them without any serialization layer.
+Each event struct is defined here AND mirrored exactly in Go (`events.go`). Field order, sizes, and padding must be identical - the kernel writes raw bytes and Go reads them without any serialization layer.
 
-**vmlinux.h** is auto-generated from the running kernel's BTF (BPF Type Format) information. It contains the type definitions for kernel structs like `struct task_struct`, `struct tcp_sock`, etc. This enables CO-RE — programs compiled on one machine run on any kernel version.
+**vmlinux.h** is auto-generated from the running kernel's BTF (BPF Type Format) information. It contains the type definitions for kernel structs like `struct task_struct`, `struct tcp_sock`, etc. This enables CO-RE - programs compiled on one machine run on any kernel version.
 
 ### 4.3 Program: syscall_latency.c
 
 **Purpose:** Measure how long every system call takes.
 
 **Hook points:**
-- `tracepoint/raw_syscalls/sys_enter` — fires when any syscall begins
-- `tracepoint/raw_syscalls/sys_exit` — fires when any syscall returns
+- `tracepoint/raw_syscalls/sys_enter` - fires when any syscall begins
+- `tracepoint/raw_syscalls/sys_exit` - fires when any syscall returns
 
 **How it works:**
 ```
@@ -317,8 +317,8 @@ struct syscall_event {
 **Purpose:** Track TCP connection lifecycle, retransmits, and round-trip time.
 
 **Hook points:**
-- `tracepoint/tcp/tcp_retransmit_skb` — fires on every TCP retransmission
-- `tracepoint/sock/inet_sock_set_state` — fires on TCP state changes (connect, close)
+- `tracepoint/tcp/tcp_retransmit_skb` - fires on every TCP retransmission
+- `tracepoint/sock/inet_sock_set_state` - fires on TCP state changes (connect, close)
 
 **How it works:**
 ```
@@ -357,7 +357,7 @@ struct tcp_event {
 **Purpose:** Capture every OOM (Out of Memory) kill event with context about the victim process.
 
 **Hook point:**
-- `kprobe/oom_kill_process` — fires when the kernel decides to kill a process to free memory
+- `kprobe/oom_kill_process` - fires when the kernel decides to kill a process to free memory
 
 Note: This uses a kprobe (not a tracepoint) because there's no stable tracepoint for OOM kills. Kprobes are less stable across kernel versions but work with CO-RE.
 
@@ -378,8 +378,8 @@ Note: This uses a kprobe (not a tracepoint) because there's no stable tracepoint
 **Purpose:** Measure block I/O latency per operation (read/write/sync).
 
 **Hook points:**
-- `tracepoint/block/block_rq_issue` — fires when a block request is issued to the device
-- `tracepoint/block/block_rq_complete` — fires when the device completes the request
+- `tracepoint/block/block_rq_issue` - fires when a block request is issued to the device
+- `tracepoint/block/block_rq_complete` - fires when the device completes the request
 
 **How it works:**
 ```
@@ -418,8 +418,8 @@ struct disk_event {
 **Purpose:** Measure how long processes wait on the CPU run queue before being scheduled.
 
 **Hook points:**
-- `tracepoint/sched/sched_wakeup` — fires when a process is placed on the run queue
-- `tracepoint/sched/sched_switch` — fires when the CPU switches to a process
+- `tracepoint/sched/sched_wakeup` - fires when a process is placed on the run queue
+- `tracepoint/sched/sched_switch` - fires when the CPU switches to a process
 
 **How it works:**
 ```
@@ -434,15 +434,15 @@ struct disk_event {
    - Submit sched_event to ring buffer
 ```
 
-**Why this matters:** A run queue delay of 20ms means processes are waiting 20ms before they even start running. This is CPU contention — either too many processes or noisy neighbors.
+**Why this matters:** A run queue delay of 20ms means processes are waiting 20ms before they even start running. This is CPU contention - either too many processes or noisy neighbors.
 
 ### 4.8 Program: fd_track.c
 
 **Purpose:** Track file descriptor opens and closes per process to detect FD leaks.
 
 **Hook points:**
-- `tracepoint/syscalls/sys_exit_openat` — fires after an `openat()` syscall completes
-- `tracepoint/syscalls/sys_exit_close` — fires after a `close()` syscall completes
+- `tracepoint/syscalls/sys_exit_openat` - fires after an `openat()` syscall completes
+- `tracepoint/syscalls/sys_exit_close` - fires after a `close()` syscall completes
 
 **How it works:**
 ```
@@ -459,7 +459,7 @@ struct disk_event {
 
 ---
 
-## 5. Layer 2 — Go BPF Loaders (Kernel-to-Userspace Bridge)
+## 5. Layer 2 - Go BPF Loaders (Kernel-to-Userspace Bridge)
 
 ### 5.1 The Loader Interface
 
@@ -512,7 +512,7 @@ When you run `make generate`, this:
    - A `syscallLatencyObjects` struct with typed fields for each map and program
    - A `loadSyscallLatencyObjects()` function that loads everything into the kernel
 
-The generated files are NOT committed to git — CI generates them fresh.
+The generated files are NOT committed to git - CI generates them fresh.
 
 ### 5.3 The Stub System (Building Without Clang)
 
@@ -529,7 +529,7 @@ func loadSyscallLatencyObjects(obj *syscallLatencyObjects, opts *ebpf.Collection
 
 The `!ebpf` build tag means these stubs are used by default. When you compile with real eBPF (`make generate`), the generated `_bpfel.go` files replace the stubs.
 
-This means `go build ./...` works on any machine — you only need clang to actually run eBPF programs.
+This means `go build ./...` works on any machine - you only need clang to actually run eBPF programs.
 
 ### 5.4 Event Types in Go
 
@@ -558,10 +558,10 @@ func DecodeSyscallEvent(data []byte) (*SyscallEvent, error) {
 ```
 
 Each event type has helper methods:
-- `CommString()` — converts null-terminated byte array to Go string
-- `Latency()` / `RunqDelay()` / `RTT()` — converts nanosecond fields to `time.Duration`
-- `SrcAddr()` / `DstAddr()` — converts uint32 to `net.IP`
-- `OpString()` — converts operation byte to "read"/"write"/"sync"
+- `CommString()` - converts null-terminated byte array to Go string
+- `Latency()` / `RunqDelay()` / `RTT()` - converts nanosecond fields to `time.Duration`
+- `SrcAddr()` / `DstAddr()` - converts uint32 to `net.IP`
+- `OpString()` - converts operation byte to "read"/"write"/"sync"
 
 ### 5.5 LoaderSet: Managing Multiple Programs
 
@@ -579,11 +579,11 @@ set.LoadAll()   // Load all into kernel (fails on first error)
 defer set.Close()  // Detach and unload all (reverse order)
 ```
 
-The `start` command uses individual loading with graceful degradation instead — if one program fails, the others still run.
+The `start` command uses individual loading with graceful degradation instead - if one program fails, the others still run.
 
 ---
 
-## 6. Layer 3 — Collector Framework (Aggregation)
+## 6. Layer 3 - Collector Framework (Aggregation)
 
 ### 6.1 The Collector Interface
 
@@ -652,7 +652,7 @@ type Signals struct {
 }
 ```
 
-Doctor rules, AI prompts, exporters, and the dashboard all consume this same struct. This is a deliberate design decision — one snapshot format for the entire system.
+Doctor rules, AI prompts, exporters, and the dashboard all consume this same struct. This is a deliberate design decision - one snapshot format for the entire system.
 
 ### 6.4 Snapshot Types
 
@@ -670,7 +670,7 @@ type Percentiles struct {
 
 **TCPSnapshot:** Active connections, total retransmits, retransmit rate (%), RTT percentiles, top retransmitters list.
 
-**OOMSnapshot:** List of OOM events with victim process details. No aggregation — every OOM is critical.
+**OOMSnapshot:** List of OOM events with victim process details. No aggregation - every OOM is critical.
 
 **DiskIOSnapshot:** Separate latency percentiles for read, write, and sync operations. Counts and throughput (bytes).
 
@@ -682,7 +682,7 @@ type Percentiles struct {
 
 ---
 
-## 7. Layer 4 — Doctor Engine (Diagnostics)
+## 7. Layer 4 - Doctor Engine (Diagnostics)
 
 ### 7.1 The Engine Orchestrator
 
@@ -708,7 +708,7 @@ Phase 4: Append signals to history ring buffer
 ```
 
 Key behaviors:
-- AI failure is **non-fatal** — the engine logs a warning and continues with rule-based results
+- AI failure is **non-fatal** - the engine logs a warning and continues with rule-based results
 - Only calls AI if there are actionable findings (WARNING or CRITICAL)
 - Maintains a 10-snapshot history for continuous mode trend analysis
 
@@ -753,7 +753,7 @@ IF write P99 ≥ DiskP99CriticalNs (200ms default):
 ```
 
 **Evidence:** `"sync P99=210ms (threshold: 200ms), 1523 sync ops"`
-**Fix:** `["iostat -x 1 — identify the saturated device", "check I/O scheduler and queue depth", "consider faster storage or SSD"]`
+**Fix:** `["iostat -x 1 - identify the saturated device", "check I/O scheduler and queue depth", "consider faster storage or SSD"]`
 
 ---
 
@@ -782,7 +782,7 @@ IF RetransmitRate ≥ TCPRetransmitPct (2.0% default):
 ```
 
 **Evidence:** `"retransmit rate=5.2% (threshold: 2.0%), 156 total retransmits, 42 active connections"`
-**Fix:** `["ethtool -S <iface> — check NIC errors", "ping / mtr — check path quality", "ss -ti — inspect per-connection metrics"]`
+**Fix:** `["ethtool -S <iface> - check NIC errors", "ping / mtr - check path quality", "ss -ti - inspect per-connection metrics"]`
 
 ---
 
@@ -811,7 +811,7 @@ ELIF RunqDelay.P99 ≥ SchedDelayWarningNs (5ms default):
 ```
 
 **Evidence:** `"runqueue P99=25ms, P50=2ms (warning: 5ms, critical: 20ms)"`
-**Fix:** `["top -H -p <pid> — find thread count", "reduce thread/goroutine count", "check for noisy neighbors: cgroup CPU shares"]`
+**Fix:** `["top -H -p <pid> - find thread count", "reduce thread/goroutine count", "check for noisy neighbors: cgroup CPU shares"]`
 
 ---
 
@@ -899,7 +899,7 @@ IF len(findings) == 0:
     → INFO "All kernel signals within normal thresholds"
 ```
 
-This is the positive case — confirming that monitoring is working and everything looks good.
+This is the positive case - confirming that monitoring is working and everything looks good.
 
 ---
 
@@ -924,10 +924,10 @@ type Finding struct {
 ```
 
 **The `RankFindings()` algorithm sorts by:**
-1. **Severity descending** — CRITICAL (2) before WARNING (1) before INFO (0)
-2. **ETA ascending** — shortest time to failure first (most urgent)
-3. **Has ETA** before doesn't have ETA — a ticking clock is more urgent
-4. **Threshold breach ratio** — value/threshold ratio descending (how badly is the threshold exceeded?)
+1. **Severity descending** - CRITICAL (2) before WARNING (1) before INFO (0)
+2. **ETA ascending** - shortest time to failure first (most urgent)
+3. **Has ETA** before doesn't have ETA - a ticking clock is more urgent
+4. **Threshold breach ratio** - value/threshold ratio descending (how badly is the threshold exceeded?)
 
 Result: A CRITICAL finding with a 5-minute ETA sorts before a CRITICAL with no ETA, which sorts before a WARNING.
 
@@ -980,7 +980,7 @@ type Renderer interface {
   Cause:    Disk sync operations are taking >200ms...
   Impact:   Applications waiting on fsync() will stall...
   Evidence: sync P99=210ms (threshold: 200ms), 1523 sync ops
-  Fix:      → iostat -x 1 — identify the saturated device
+  Fix:      → iostat -x 1 - identify the saturated device
             → check I/O scheduler and queue depth
 
  RECOMMENDED ACTION ORDER
@@ -1024,13 +1024,13 @@ func Predict(snapshots []*collector.Signals) *PredictionReport
 | `predictTCPDegradation` | Retransmit rate | 2.0% | "TCP storm in ~20m" |
 
 **Math:**
-- `linearSlope()` — least-squares regression on the metric values across snapshots
-- `rateConsistency()` — coefficient of variation (how stable is the trend?)
+- `linearSlope()` - least-squares regression on the metric values across snapshots
+- `rateConsistency()` - coefficient of variation (how stable is the trend?)
 - Confidence = inverted CV, clamped to [0.3, 0.95]
 
 ---
 
-## 8. Layer 5 — AI Analysis (Optional Enrichment)
+## 8. Layer 5 - AI Analysis (Optional Enrichment)
 
 ### 8.1 Architecture: Why AI is a Post-Processing Layer
 
@@ -1059,7 +1059,7 @@ type Provider interface {
 }
 ```
 
-**No LLM SDK dependencies.** All three providers use `net/http` + `encoding/json`. This is intentional — SDKs add weight, version conflicts, and often break.
+**No LLM SDK dependencies.** All three providers use `net/http` + `encoding/json`. This is intentional - SDKs add weight, version conflicts, and often break.
 
 ### 8.3 Anthropic, OpenAI, Ollama Providers
 
@@ -1130,7 +1130,7 @@ HOST: myserver.local, kernel 6.1.0, amd64
 WINDOW: 30s ending 2026-04-04T15:30:30Z
 
 FINDINGS (ranked):
-[CRITICAL] diskio: Disk I/O bottleneck — process: postgres
+[CRITICAL] diskio: Disk I/O bottleneck - process: postgres
            evidence: sync P99=210ms (threshold: 200ms)
 
 RAW METRICS:
@@ -1190,7 +1190,7 @@ func (f *FallbackAnalyzer) Analyze(ctx, req) (*AnalysisResponse, error) {
 
 ---
 
-## 9. Layer 6 — CLI (User Interface)
+## 9. Layer 6 - CLI (User Interface)
 
 ### 9.1 Root Command and Global Flags
 
@@ -1226,7 +1226,7 @@ func New() *cobra.Command {
 4. Validates configuration
 5. Initializes structured logger (`log/slog`)
 
-### 9.2 kerno doctor — The Main Event
+### 9.2 kerno doctor - The Main Event
 
 ```bash
 sudo kerno doctor                         # 30-second diagnostic
@@ -1249,7 +1249,7 @@ sudo kerno doctor --ai                    # Enable AI enrichment
    - If `--exit-code` and CRITICAL → exit 1
 7. If `--continuous` → wait `--interval` → repeat
 
-### 9.3 kerno trace — Real-Time Event Streaming
+### 9.3 kerno trace - Real-Time Event Streaming
 
 Trace commands load a single eBPF program and stream individual events:
 
@@ -1266,7 +1266,7 @@ sudo kerno trace sched --threshold 5ms --duration 30s
   ```
 - **Top mode** (`--top 10`): Accumulate events, refresh display every 1s
   ```
-  [15:04:05] Syscall Latency Top — 42 entries (last 1s)
+  [15:04:05] Syscall Latency Top - 42 entries (last 1s)
   SYSCALL          PROCESS             COUNT        P50        P95        P99
   ──────────────────────────────────────────────────────────────────────────────
   fsync            postgres             1523      2.1ms      15ms       45ms
@@ -1274,12 +1274,12 @@ sudo kerno trace sched --threshold 5ms --duration 30s
   ```
 
 **Filter logic** (exported for testing):
-- `matchSyscallFilter(event, filter)` — match by name ("read") or number ("0")
-- `matchDiskOp(event, filter)` — match "read"/"write"/"sync" against Op byte
-- `matchDiskProcess(event, filter)` — case-insensitive Comm match
-- `matchOOMThreshold(event, threshold)` — OOM score comparison
+- `matchSyscallFilter(event, filter)` - match by name ("read") or number ("0")
+- `matchDiskOp(event, filter)` - match "read"/"write"/"sync" against Op byte
+- `matchDiskProcess(event, filter)` - case-insensitive Comm match
+- `matchOOMThreshold(event, threshold)` - OOM score comparison
 
-### 9.4 kerno watch — Aggregated Monitoring
+### 9.4 kerno watch - Aggregated Monitoring
 
 Watch commands aggregate events over time windows:
 
@@ -1318,7 +1318,7 @@ Every --interval:
     Render table sorted by growth rate
 ```
 
-### 9.5 kerno start — Daemon Mode
+### 9.5 kerno start - Daemon Mode
 
 ```bash
 sudo kerno start                     # Default: Prometheus on :9090
@@ -1327,7 +1327,7 @@ sudo kerno start --dashboard         # Future: web UI
 ```
 
 **Implementation:**
-1. `requireRoot()` — eBPF needs privileges
+1. `requireRoot()` - eBPF needs privileges
 2. Load BPF programs individually with graceful degradation:
    - For each enabled collector in config, try `Load()`
    - On failure → log warning, skip (don't crash)
@@ -1337,7 +1337,7 @@ sudo kerno start --dashboard         # Future: web UI
 5. Block on signal (`<-ctx.Done()`)
 6. Graceful shutdown: HTTP server → BPF programs → log completion
 
-### 9.6 kerno predict — Failure Prediction
+### 9.6 kerno predict - Failure Prediction
 
 ```bash
 sudo kerno predict                          # 3 snapshots, 10s interval
@@ -1357,7 +1357,7 @@ Collects multiple signal snapshots over time, then runs `doctor.Predict()`:
                 → lsof -p <pid> | grep -c ESTABLISHED
 ```
 
-### 9.7 kerno explain — AI Error Explainer
+### 9.7 kerno explain - AI Error Explainer
 
 ```bash
 # Pipe a log line
@@ -1371,7 +1371,7 @@ Sends the error message to the configured LLM with a kernel-expert system prompt
 
 ---
 
-## 10. Layer 7 — Configuration
+## 10. Layer 7 - Configuration
 
 ### 10.1 Config Struct and Defaults
 
@@ -1569,21 +1569,21 @@ LDFLAGS = -X github.com/lowplane/kerno/internal/version.Version=$(VERSION)
 
 | Term | Definition |
 |------|-----------|
-| **eBPF** | Extended Berkeley Packet Filter — kernel-level programmability framework |
-| **CO-RE** | Compile Once, Run Everywhere — eBPF portability via BTF |
-| **BTF** | BPF Type Format — kernel type metadata for CO-RE |
+| **eBPF** | Extended Berkeley Packet Filter - kernel-level programmability framework |
+| **CO-RE** | Compile Once, Run Everywhere - eBPF portability via BTF |
+| **BTF** | BPF Type Format - kernel type metadata for CO-RE |
 | **vmlinux.h** | Auto-generated header containing all kernel type definitions |
 | **bpf2go** | cilium/ebpf tool that compiles C to eBPF bytecode and generates Go bindings |
 | **Ring buffer** | Lock-free kernel→userspace event queue (BPF_MAP_TYPE_RINGBUF) |
 | **Tracepoint** | Stable kernel hook point with defined ABI (preferred) |
 | **Kprobe** | Dynamic hook on any kernel function (less stable, more flexible) |
-| **P99** | 99th percentile — the value below which 99% of observations fall |
-| **RTT** | Round-Trip Time — time for a TCP packet to go and come back |
-| **OOM** | Out of Memory — kernel kills a process to free memory |
+| **P99** | 99th percentile - the value below which 99% of observations fall |
+| **RTT** | Round-Trip Time - time for a TCP packet to go and come back |
+| **OOM** | Out of Memory - kernel kills a process to free memory |
 | **Run queue delay** | Time a process waits on the CPU queue before being scheduled |
-| **FD** | File Descriptor — integer handle for an open file/socket/pipe |
+| **FD** | File Descriptor - integer handle for an open file/socket/pipe |
 | **ulimit** | Per-process resource limit (FD limit is typically 65536) |
-| **NDJSON** | Newline-delimited JSON — one JSON object per line |
+| **NDJSON** | Newline-delimited JSON - one JSON object per line |
 | **Signals** | Kerno's unified snapshot struct containing all 7 signal dimensions |
 | **Finding** | A diagnostic conclusion from a rule evaluation |
 | **Severity** | INFO (normal), WARNING (investigate), CRITICAL (act now) |

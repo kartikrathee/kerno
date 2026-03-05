@@ -48,10 +48,10 @@ git commit -s -m "feat: add syscall latency collector"
 | **clang** | 14 | 17+ | For eBPF C compilation |
 | **llvm** | 14 | 17+ | `llvm-strip` used by bpf2go |
 | **libbpf-dev** | 0.8 | 1.0+ | BPF CO-RE headers |
-| **bpftool** | — | latest | BTF inspection and debugging |
-| **make** | 4.0 | — | Build orchestration |
+| **bpftool** | - | latest | BTF inspection and debugging |
+| **make** | 4.0 | - | Build orchestration |
 
-### Step 1 — Install System Dependencies
+### Step 1 - Install System Dependencies
 
 **Ubuntu / Debian (22.04+):**
 
@@ -90,7 +90,7 @@ sudo pacman -S \
   git curl
 ```
 
-### Step 2 — Install Go
+### Step 2 - Install Go
 
 If you don't have Go 1.24+ installed:
 
@@ -109,7 +109,7 @@ export PATH=$PATH:/usr/local/go/bin:$HOME/go/bin
 go version
 ```
 
-### Step 3 — Install Go Tooling
+### Step 3 - Install Go Tooling
 
 ```bash
 # Install development tools used by the Makefile
@@ -132,7 +132,7 @@ go install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@latest
 go install github.com/goreleaser/goreleaser/v2@latest
 ```
 
-### Step 4 — Verify BTF Support
+### Step 4 - Verify BTF Support
 
 Kerno requires BTF (BPF Type Format) in your kernel:
 
@@ -146,13 +146,13 @@ bpftool btf dump file /sys/kernel/btf/vmlinux format raw | head -c 4
 
 If BTF is missing, you need a kernel compiled with `CONFIG_DEBUG_INFO_BTF=y`. Most modern distro kernels (Ubuntu 22.04+, Fedora 38+, Arch) have this enabled by default.
 
-### Step 5 — Clone and Build
+### Step 5 - Clone and Build
 
 ```bash
 git clone https://github.com/lowplane/kerno.git
 cd kerno
 
-# Standard build (uses stub BPF types — no clang required)
+# Standard build (uses stub BPF types - no clang required)
 make build
 
 # Verify the binary works
@@ -160,7 +160,7 @@ make build
 ./bin/kerno --help
 ```
 
-### Step 6 — Full Build with eBPF Compilation (Optional)
+### Step 6 - Full Build with eBPF Compilation (Optional)
 
 If you're working on the eBPF C programs:
 
@@ -177,7 +177,7 @@ make generate
 
 > **Note:** The standard `make build` uses pre-generated Go stub types (`gen_stub.go`) so you can develop and test Go code without clang/libbpf installed. Only use `make build-ebpf` when modifying the eBPF C programs.
 
-### Step 7 — Run the Doctor (requires root)
+### Step 7 - Run the Doctor (requires root)
 
 ```bash
 sudo ./bin/kerno doctor
@@ -259,10 +259,10 @@ make check
 
 **Test categories:**
 
-- `internal/version` — Build metadata resolution tests
-- `internal/config` — Configuration parsing + validation (8 table-driven tests)
-- `internal/bpf` — Event binary round-trip, helper methods, type consistency
-- `internal/collector` — Registry lifecycle, signal aggregation
+- `internal/version` - Build metadata resolution tests
+- `internal/config` - Configuration parsing + validation (8 table-driven tests)
+- `internal/bpf` - Event binary round-trip, helper methods, type consistency
+- `internal/collector` - Registry lifecycle, signal aggregation
 
 ---
 
@@ -327,10 +327,10 @@ kerno/
 
 ### Key Architecture Decisions
 
-- **`internal/`** — All packages are internal; the only public API is the CLI binary.
-- **Build tag strategy** — `gen_stub.go` (`//go:build !ebpf`) provides stub types so `make build` works without clang. The real BPF-generated types are only produced when running `make generate` with the `ebpf` build tag.
-- **Loader interface** — Each eBPF program has a typed Go loader implementing a common `Loader` interface, enabling uniform lifecycle management via `LoaderSet`.
-- **Collector interface** — Collectors consume raw events from loaders, aggregate them into typed snapshots, and expose them via a `Registry` for the doctor engine.
+- **`internal/`** - All packages are internal; the only public API is the CLI binary.
+- **Build tag strategy** - `gen_stub.go` (`//go:build !ebpf`) provides stub types so `make build` works without clang. The real BPF-generated types are only produced when running `make generate` with the `ebpf` build tag.
+- **Loader interface** - Each eBPF program has a typed Go loader implementing a common `Loader` interface, enabling uniform lifecycle management via `LoaderSet`.
+- **Collector interface** - Collectors consume raw events from loaders, aggregate them into typed snapshots, and expose them via a `Registry` for the doctor engine.
 
 ---
 
@@ -438,7 +438,7 @@ perf(collector): reduce syscall aggregation allocations by 40%
 
 - Follow [Effective Go](https://go.dev/doc/effective_go) and the [Go Code Review Comments](https://github.com/golang/go/wiki/CodeReviewComments).
 - All exported types, functions, and methods **must** have doc comments.
-- Use `log/slog` for structured logging — never `fmt.Println` in library code.
+- Use `log/slog` for structured logging - never `fmt.Println` in library code.
 - Error messages are lowercase, no trailing punctuation: `return fmt.Errorf("loading BPF program: %w", err)`.
 - Wrap errors with `%w` for the entire call chain.
 - Use `context.Context` as the first parameter for anything cancellable.
@@ -449,9 +449,9 @@ perf(collector): reduce syscall aggregation allocations by 40%
 - Include `vmlinux.h` first, then `<bpf/bpf_helpers.h>`, then `kerno.h`.
 - Use CO-RE (`BPF_CORE_READ`) for all field access.
 - Prefer tracepoints over kprobes where available.
-- Keep programs small — the verifier has limits.
+- Keep programs small - the verifier has limits.
 - Comment non-obvious kernel interactions.
-- All shared structs go in `internal/bpf/c/headers/kerno.h` — the Go event types in `events.go` must match exactly.
+- All shared structs go in `internal/bpf/c/headers/kerno.h` - the Go event types in `events.go` must match exactly.
 
 ### General
 
@@ -464,7 +464,7 @@ perf(collector): reduce syscall aggregation allocations by 40%
 
 ## Pull Request Guidelines
 
-- PRs should be focused — one concern per PR.
+- PRs should be focused - one concern per PR.
 - Include a clear description of **what** and **why**.
 - Link related issues with `Fixes #123` or `Relates to #123`.
 - All CI checks must pass.
