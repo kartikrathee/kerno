@@ -59,6 +59,7 @@ idea.md
 tmp/
 *.tmp
 *.log
+BRAND_TODO.md
 
 # Root binary
 /kerno

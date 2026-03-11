@@ -174,7 +174,31 @@ flowchart TB
 - Linux kernel **>= 5.8** with BTF support (check: `ls /sys/kernel/btf/vmlinux`)
 - Root access (or `CAP_BPF` + `CAP_PERFMON`)
 
-### Three commands to a healthy server
+### One-liner install (any Linux)
+
+```bash
+curl -sfL https://get.kerno.sh | sudo bash
+sudo kerno doctor
+```
+
+### Or run as a daemon (bare metal / VMs)
+
+```bash
+curl -sfL https://get.kerno.sh | sudo bash -s -- --daemon
+# Kerno is now running as a systemd service with Prometheus metrics on :9090
+sudo kerno doctor          # One-shot diagnosis
+journalctl -u kerno -f     # Stream logs
+curl localhost:9090/metrics # Scrape with Prometheus
+```
+
+### Or deploy on Kubernetes
+
+```bash
+helm install kerno ./deploy/helm/kerno \
+  -n kerno-system --create-namespace
+```
+
+### Or build from source
 
 ```bash
 git clone https://github.com/lowplane/kerno.git
@@ -190,13 +214,6 @@ docker run --privileged --pid=host \
   -v /sys/fs/bpf:/sys/fs/bpf \
   -v /proc:/proc:ro \
   ghcr.io/lowplane/kerno:latest doctor
-```
-
-### Or deploy on Kubernetes
-
-```bash
-helm install kerno ./deploy/helm/kerno \
-  -n kerno-system --create-namespace
 ```
 
 ---
