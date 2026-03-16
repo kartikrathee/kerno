@@ -96,7 +96,7 @@ func runStart(ctx context.Context, opts startOpts) error {
 	// Phase 1: Load eBPF programs with graceful degradation.
 	loaders, loaderSet := buildLoaders(logger)
 	loadedCount := 0
-	var closers []func()
+	closers := make([]func(), 0, len(loaders))
 
 	for _, l := range loaders {
 		closer, err := l.Load()

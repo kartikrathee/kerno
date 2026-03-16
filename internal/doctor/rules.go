@@ -107,7 +107,7 @@ func evalOOMKillOccurred(s *collector.Signals) []Finding {
 		return nil
 	}
 
-	var findings []Finding
+	findings := make([]Finding, 0, len(s.OOM.Events))
 	for _, evt := range s.OOM.Events {
 		findings = append(findings, Finding{
 			Severity: SeverityCritical,
@@ -296,7 +296,7 @@ func evalSyscallLatencyHigh(s *collector.Signals, t config.DoctorThresholds) []F
 	warningNs := time.Duration(t.SyscallP99WarningNs)
 	criticalNs := time.Duration(t.SyscallP99CriticalNs)
 
-	var findings []Finding
+	findings := make([]Finding, 0, len(s.Syscall.Entries))
 	for _, entry := range s.Syscall.Entries {
 		p99 := entry.Latency.P99
 		if p99 < warningNs {
@@ -391,7 +391,7 @@ func evalSyscallErrorRate(s *collector.Signals) []Finding {
 		return nil
 	}
 
-	var findings []Finding
+	findings := make([]Finding, 0, len(s.Syscall.Entries))
 	for _, entry := range s.Syscall.Entries {
 		if entry.Count == 0 || entry.ErrorCount == 0 {
 			continue
