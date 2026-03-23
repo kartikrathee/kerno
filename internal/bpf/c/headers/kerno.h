@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2026 Lowplane contributors.
+// Copyright 2026 Optiqor contributors.
 //
 // kerno.h — Shared definitions for all Kerno eBPF programs.
 //

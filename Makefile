@@ -1,9 +1,9 @@
-# Copyright 2026 Lowplane contributors
+# Copyright 2026 Optiqor contributors
 # SPDX-License-Identifier: Apache-2.0
 
 # ─── Project Metadata ────────────────────────────────────────────────────────
 
-MODULE   := github.com/lowplane/kerno
+MODULE   := github.com/optiqor/kerno
 BIN_NAME := kerno
 BIN_DIR  := bin
 
@@ -136,7 +136,7 @@ ui-fetch:
 		echo "UI assets already present. Run 'make clean' to refetch."; \
 	else \
 		echo "Fetching kerno-ui $(KERNO_UI_VERSION)..."; \
-		echo "  TODO: Download from https://github.com/lowplane/kerno-ui/releases"; \
+		echo "  TODO: Download from https://github.com/optiqor/kerno-ui/releases"; \
 		echo "  For now, the dashboard will show a 'no assets found' message."; \
 	fi
 
@@ -148,7 +148,7 @@ ui-dev: build
 
 ## docker: Build Docker image
 docker:
-	docker build -t ghcr.io/lowplane/kerno:$(VERSION) \
+	docker build -t ghcr.io/optiqor/kerno:$(VERSION) \
 		--build-arg VERSION=$(VERSION) \
 		--build-arg COMMIT=$(COMMIT) \
 		--build-arg DATE=$(DATE) \

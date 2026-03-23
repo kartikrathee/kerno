@@ -1,4 +1,4 @@
-// Copyright 2026 Lowplane contributors
+// Copyright 2026 Optiqor contributors
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -12,10 +12,10 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/lowplane/kerno/internal/ai"
-	"github.com/lowplane/kerno/internal/collector"
-	"github.com/lowplane/kerno/internal/config"
-	"github.com/lowplane/kerno/internal/doctor"
+	"github.com/optiqor/kerno/internal/ai"
+	"github.com/optiqor/kerno/internal/collector"
+	"github.com/optiqor/kerno/internal/config"
+	"github.com/optiqor/kerno/internal/doctor"
 )
 
 func newDoctorCmd() *cobra.Command {

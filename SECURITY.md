@@ -6,7 +6,7 @@
 
 If you discover a security vulnerability in Kerno, please report it responsibly:
 
-1. **Email:** Send a detailed report to **lowplane.dev@gmail.com**
+1. **Email:** Send a detailed report to **team.optiqor@gmail.com**
 2. **Subject line:** `[SECURITY] Brief description of vulnerability`
 3. **Include:**
    - Description of the vulnerability
@@ -59,6 +59,6 @@ Kerno runs with elevated privileges (root or `CAP_BPF` + `CAP_PERFMON` + `CAP_SY
 
 ## Contact
 
-- **Security reports:**  lowplane.dev@gmail.com
+- **Security reports:**  team.optiqor@gmail.com
 - **General questions:** GitHub Discussions
 - **Maintainer:** Shivam Kumar (@btwshivam)

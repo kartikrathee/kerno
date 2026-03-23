@@ -1,4 +1,4 @@
-// Copyright 2026 Lowplane contributors
+// Copyright 2026 Optiqor contributors
 // SPDX-License-Identifier: Apache-2.0
 
 package doctor
@@ -8,7 +8,7 @@ import (
 	"math"
 	"time"
 
-	"github.com/lowplane/kerno/internal/collector"
+	"github.com/optiqor/kerno/internal/collector"
 )
 
 // Prediction represents a predicted future failure.

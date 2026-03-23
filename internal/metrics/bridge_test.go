@@ -1,4 +1,4 @@
-// Copyright 2026 Lowplane contributors
+// Copyright 2026 Optiqor contributors
 // SPDX-License-Identifier: Apache-2.0
 
 package metrics
@@ -10,7 +10,7 @@ import (
 
 	"github.com/prometheus/client_golang/prometheus/testutil"
 
-	"github.com/lowplane/kerno/internal/bpf"
+	"github.com/optiqor/kerno/internal/bpf"
 )
 
 func TestRecordSyscall(t *testing.T) {

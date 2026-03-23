@@ -1,4 +1,4 @@
-module github.com/lowplane/kerno
+module github.com/optiqor/kerno
 
 go 1.25.4
 

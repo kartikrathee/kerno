@@ -1,4 +1,4 @@
-# Copyright 2026 Lowplane contributors
+# Copyright 2026 Optiqor contributors
 # SPDX-License-Identifier: Apache-2.0
 
 version: "2"
@@ -129,7 +129,7 @@ formatters:
   settings:
     goimports:
       local-prefixes:
-        - github.com/lowplane/kerno
+        - github.com/optiqor/kerno
 
 issues:
   max-issues-per-linter: 0

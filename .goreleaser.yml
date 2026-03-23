@@ -1,4 +1,4 @@
-# Copyright 2026 Lowplane contributors
+# Copyright 2026 Optiqor contributors
 # SPDX-License-Identifier: Apache-2.0
 # https://goreleaser.com/customization/
 
@@ -25,9 +25,9 @@ builds:
       - -trimpath
     ldflags:
       - -s -w
-      - -X github.com/lowplane/kerno/internal/version.Version={{ .Version }}
-      - -X github.com/lowplane/kerno/internal/version.Commit={{ .ShortCommit }}
-      - -X github.com/lowplane/kerno/internal/version.Date={{ .Date }}
+      - -X github.com/optiqor/kerno/internal/version.Version={{ .Version }}
+      - -X github.com/optiqor/kerno/internal/version.Commit={{ .ShortCommit }}
+      - -X github.com/optiqor/kerno/internal/version.Date={{ .Date }}
 
 archives:
   - id: default
@@ -56,7 +56,7 @@ changelog:
 
 release:
   github:
-    owner: lowplane
+    owner: optiqor
     name: kerno
   prerelease: auto
   draft: false
@@ -64,44 +64,44 @@ release:
   header: |
     ## Kerno {{ .Tag }}
 
-    See the [full changelog](https://github.com/lowplane/kerno/compare/{{ .PreviousTag }}...{{ .Tag }}).
+    See the [full changelog](https://github.com/optiqor/kerno/compare/{{ .PreviousTag }}...{{ .Tag }}).
   footer: |
     ---
-    **Full Changelog**: https://github.com/lowplane/kerno/compare/{{ .PreviousTag }}...{{ .Tag }}
+    **Full Changelog**: https://github.com/optiqor/kerno/compare/{{ .PreviousTag }}...{{ .Tag }}
 
 dockers:
   - image_templates:
-      - "ghcr.io/lowplane/kerno:{{ .Tag }}-amd64"
+      - "ghcr.io/optiqor/kerno:{{ .Tag }}-amd64"
     use: buildx
     build_flag_templates:
       - "--platform=linux/amd64"
       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
       - "--label=org.opencontainers.image.version={{ .Version }}"
-      - "--label=org.opencontainers.image.source=https://github.com/lowplane/kerno"
+      - "--label=org.opencontainers.image.source=https://github.com/optiqor/kerno"
       - "--label=org.opencontainers.image.licenses=Apache-2.0"
     dockerfile: Dockerfile.goreleaser
     goos: linux
     goarch: amd64
 
   - image_templates:
-      - "ghcr.io/lowplane/kerno:{{ .Tag }}-arm64"
+      - "ghcr.io/optiqor/kerno:{{ .Tag }}-arm64"
     use: buildx
     build_flag_templates:
       - "--platform=linux/arm64"
       - "--label=org.opencontainers.image.title={{ .ProjectName }}"
       - "--label=org.opencontainers.image.version={{ .Version }}"
-      - "--label=org.opencontainers.image.source=https://github.com/lowplane/kerno"
+      - "--label=org.opencontainers.image.source=https://github.com/optiqor/kerno"
       - "--label=org.opencontainers.image.licenses=Apache-2.0"
     dockerfile: Dockerfile.goreleaser
     goos: linux
     goarch: arm64
 
 docker_manifests:
-  - name_template: "ghcr.io/lowplane/kerno:{{ .Tag }}"
+  - name_template: "ghcr.io/optiqor/kerno:{{ .Tag }}"
     image_templates:
-      - "ghcr.io/lowplane/kerno:{{ .Tag }}-amd64"
-      - "ghcr.io/lowplane/kerno:{{ .Tag }}-arm64"
-  - name_template: "ghcr.io/lowplane/kerno:latest"
+      - "ghcr.io/optiqor/kerno:{{ .Tag }}-amd64"
+      - "ghcr.io/optiqor/kerno:{{ .Tag }}-arm64"
+  - name_template: "ghcr.io/optiqor/kerno:latest"
     image_templates:
-      - "ghcr.io/lowplane/kerno:{{ .Tag }}-amd64"
-      - "ghcr.io/lowplane/kerno:{{ .Tag }}-arm64"
+      - "ghcr.io/optiqor/kerno:{{ .Tag }}-amd64"
+      - "ghcr.io/optiqor/kerno:{{ .Tag }}-arm64"

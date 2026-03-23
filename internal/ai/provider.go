@@ -1,4 +1,4 @@
-// Copyright 2026 Lowplane contributors
+// Copyright 2026 Optiqor contributors
 // SPDX-License-Identifier: Apache-2.0
 
 // Package ai implements LLM provider abstractions and the AI analysis layer

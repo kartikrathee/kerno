@@ -7,12 +7,12 @@
 **Your cluster broke. Your dashboards are green. Users are paging.**
 **One command. Root cause. 30 seconds.**
 
-[![CI](https://github.com/lowplane/kerno/actions/workflows/ci.yml/badge.svg)](https://github.com/lowplane/kerno/actions/workflows/ci.yml)
-[![Go Report Card](https://goreportcard.com/badge/github.com/lowplane/kerno)](https://goreportcard.com/report/github.com/lowplane/kerno)
+[![CI](https://github.com/optiqor/kerno/actions/workflows/ci.yml/badge.svg)](https://github.com/optiqor/kerno/actions/workflows/ci.yml)
+[![Go Report Card](https://goreportcard.com/badge/github.com/optiqor/kerno)](https://goreportcard.com/report/github.com/optiqor/kerno)
 [![License: Apache 2.0](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
-[![Release](https://img.shields.io/github/v/release/lowplane/kerno?include_prereleases)](https://github.com/lowplane/kerno/releases)
-[![GHCR](https://img.shields.io/badge/ghcr.io-lowplane%2Fkerno-blue?logo=docker)](https://github.com/lowplane/kerno/pkgs/container/kerno)
-![Go Version](https://img.shields.io/github/go-mod/go-version/lowplane/kerno)
+[![Release](https://img.shields.io/github/v/release/optiqor/kerno?include_prereleases)](https://github.com/optiqor/kerno/releases)
+[![GHCR](https://img.shields.io/badge/ghcr.io-optiqor%2Fkerno-blue?logo=docker)](https://github.com/optiqor/kerno/pkgs/container/kerno)
+![Go Version](https://img.shields.io/github/go-mod/go-version/optiqor/kerno)
 
 [**Quick Start**](#quick-start) · [**How It Works**](#how-it-works) · [**Features**](#features) · [**Kubernetes**](#kubernetes-deployment) · [**Docs**](docs/architecture.md)
 
@@ -204,7 +204,7 @@ For standalone Linux servers outside Kubernetes:
 
 ```bash
 # One-liner install
-curl -sfL https://raw.githubusercontent.com/lowplane/kerno/main/scripts/install.sh | sudo bash
+curl -sfL https://raw.githubusercontent.com/optiqor/kerno/main/scripts/install.sh | sudo bash
 sudo kerno doctor
 
 # Pin a specific version: --version v0.1.0
@@ -213,7 +213,7 @@ sudo kerno doctor
 Or run as a long-lived systemd service with Prometheus metrics:
 
 ```bash
-curl -sfL https://raw.githubusercontent.com/lowplane/kerno/main/scripts/install.sh | sudo bash -s -- --daemon
+curl -sfL https://raw.githubusercontent.com/optiqor/kerno/main/scripts/install.sh | sudo bash -s -- --daemon
 journalctl -u kerno -f
 ```
 
@@ -225,7 +225,7 @@ docker run --rm --privileged --pid=host \
   -v /sys/kernel/btf:/sys/kernel/btf:ro \
   -v /sys/fs/bpf:/sys/fs/bpf \
   -v /proc:/proc:ro \
-  ghcr.io/lowplane/kerno:v0.1.0 doctor
+  ghcr.io/optiqor/kerno:v0.1.0 doctor
 ```
 
 Multi-arch images (`linux/amd64`, `linux/arm64`) published to GHCR on every release.
@@ -299,7 +299,7 @@ Kerno tags every finding with pod, namespace, node, and workload labels. No `cli
 
 ```yaml
 image:
-  repository: ghcr.io/lowplane/kerno
+  repository: ghcr.io/optiqor/kerno
   tag: v0.1.0
 
 resources:
@@ -640,7 +640,7 @@ See [TODO.md](TODO.md) for the full plan. Headlines:
 - **v0.1** - DaemonSet, 6 collectors, 11 rules, Prometheus, AI post-processor - **shipped**
 - **v0.2** - CRD for cluster-wide incident policies, OpenTelemetry OTLP export, Grafana dashboards
 - **v0.3** - historical incident replay, SLO-linked alerts, Slack / PagerDuty integrations
-- **v1.0** - multi-cluster control plane, managed offering (Lowplane Cloud)
+- **v1.0** - multi-cluster control plane, managed offering (Optiqor Cloud)
 
 ---
 
@@ -682,7 +682,7 @@ Apache License 2.0 - see [LICENSE](LICENSE).
 
 ---
 
-**Kerno** is built by [Shivam](https://github.com/btwshivam) at [Lowplane](https://github.com/lowplane).
+**Kerno** is built by [Shivam](https://github.com/btwshivam) at [Optiqor](https://github.com/optiqor).
 
 If Kerno saved your on-call shift, consider leaving a **star** - it helps other engineers find the project.
 

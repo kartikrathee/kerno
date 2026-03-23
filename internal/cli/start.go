@@ -1,4 +1,4 @@
-// Copyright 2026 Lowplane contributors
+// Copyright 2026 Optiqor contributors
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -18,10 +18,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 	"github.com/spf13/cobra"
 
-	"github.com/lowplane/kerno/internal/adapter"
-	"github.com/lowplane/kerno/internal/bpf"
-	"github.com/lowplane/kerno/internal/metrics"
-	"github.com/lowplane/kerno/internal/version"
+	"github.com/optiqor/kerno/internal/adapter"
+	"github.com/optiqor/kerno/internal/bpf"
+	"github.com/optiqor/kerno/internal/metrics"
+	"github.com/optiqor/kerno/internal/version"
 )
 
 func newStartCmd() *cobra.Command {

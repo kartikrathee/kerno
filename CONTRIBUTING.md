@@ -149,7 +149,7 @@ If BTF is missing, you need a kernel compiled with `CONFIG_DEBUG_INFO_BTF=y`. Mo
 ### Step 5 - Clone and Build
 
 ```bash
-git clone https://github.com/lowplane/kerno.git
+git clone https://github.com/optiqor/kerno.git
 cd kerno
 
 # Standard build (uses stub BPF types - no clang required)
@@ -230,7 +230,7 @@ make docker
 
 # Run with required privileges
 docker run --privileged --pid=host \
-  ghcr.io/lowplane/kerno:latest doctor
+  ghcr.io/optiqor/kerno:latest doctor
 ```
 
 ---
@@ -344,7 +344,7 @@ kerno/
    ```
 3. **Add upstream remote:**
    ```bash
-   git remote add upstream https://github.com/lowplane/kerno.git
+   git remote add upstream https://github.com/optiqor/kerno.git
    ```
 4. **Create a branch** from `main`:
    ```bash

@@ -1,10 +1,10 @@
-// Copyright 2026 Lowplane contributors
+// Copyright 2026 Optiqor contributors
 // SPDX-License-Identifier: Apache-2.0
 
 // Package version exposes the build metadata injected at compile time via ldflags.
 // These values are set by the Makefile using:
 //
-//	-ldflags "-X github.com/lowplane/kerno/internal/version.Version=v0.1.0 ..."
+//	-ldflags "-X github.com/optiqor/kerno/internal/version.Version=v0.1.0 ..."
 package version
 
 import (

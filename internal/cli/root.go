@@ -1,4 +1,4 @@
-// Copyright 2026 Lowplane contributors
+// Copyright 2026 Optiqor contributors
 // SPDX-License-Identifier: Apache-2.0
 
 // Package cli defines all Cobra commands for the kerno CLI.
@@ -14,7 +14,7 @@ import (
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 
-	"github.com/lowplane/kerno/internal/config"
+	"github.com/optiqor/kerno/internal/config"
 )
 
 var (

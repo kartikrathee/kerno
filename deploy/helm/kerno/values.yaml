@@ -2,7 +2,7 @@
 # Scoped to v0.2 release: 20 diagnostic rules.
 
 image:
-  repository: ghcr.io/lowplane/kerno
+  repository: ghcr.io/optiqor/kerno
   tag: ""  # Defaults to Chart.appVersion
   pullPolicy: IfNotPresent
 

@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2026 Lowplane contributors.
+// Copyright 2026 Optiqor contributors.
 //
 // oom_track.c — Captures OOM kill events with full context.
 //

@@ -1,4 +1,4 @@
-// Copyright 2026 Lowplane contributors
+// Copyright 2026 Optiqor contributors
 // SPDX-License-Identifier: Apache-2.0
 
 package ai
@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/lowplane/kerno/internal/doctor"
+	"github.com/optiqor/kerno/internal/doctor"
 )
 
 // DefaultAnalyzer implements doctor.Analyzer by sending findings to an LLM

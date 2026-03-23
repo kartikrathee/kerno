@@ -1,4 +1,4 @@
-// Copyright 2026 Lowplane contributors
+// Copyright 2026 Optiqor contributors
 // SPDX-License-Identifier: Apache-2.0
 
 package doctor
@@ -10,8 +10,8 @@ import (
 	"runtime"
 	"time"
 
-	"github.com/lowplane/kerno/internal/collector"
-	"github.com/lowplane/kerno/internal/config"
+	"github.com/optiqor/kerno/internal/collector"
+	"github.com/optiqor/kerno/internal/config"
 )
 
 // Analyzer is the optional AI analysis interface. When non-nil, the engine

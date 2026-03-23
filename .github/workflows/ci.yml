@@ -1,4 +1,4 @@
-# Copyright 2026 Lowplane contributors
+# Copyright 2026 Optiqor contributors
 # SPDX-License-Identifier: Apache-2.0
 
 name: CI
@@ -150,6 +150,6 @@ jobs:
         with:
           context: .
           push: false
-          tags: ghcr.io/lowplane/kerno:ci
+          tags: ghcr.io/optiqor/kerno:ci
           cache-from: type=gha
           cache-to: type=gha,mode=max

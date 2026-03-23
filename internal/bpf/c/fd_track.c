@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2026 Lowplane contributors.
+// Copyright 2026 Optiqor contributors.
 //
 // fd_track.c — File descriptor open/close tracker.
 //

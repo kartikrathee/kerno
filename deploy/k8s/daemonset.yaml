@@ -1,4 +1,4 @@
-# Copyright 2026 Lowplane contributors
+# Copyright 2026 Optiqor contributors
 # SPDX-License-Identifier: Apache-2.0
 #
 # v0.2 release: 20 diagnostic rules.
@@ -38,7 +38,7 @@ spec:
         - operator: Exists
       containers:
         - name: kerno
-          image: ghcr.io/lowplane/kerno:latest
+          image: ghcr.io/optiqor/kerno:latest
           args: ["start"]
           securityContext:
             privileged: true

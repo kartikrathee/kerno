@@ -1,4 +1,4 @@
-// Copyright 2026 Lowplane contributors
+// Copyright 2026 Optiqor contributors
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -9,7 +9,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/lowplane/kerno/internal/version"
+	"github.com/optiqor/kerno/internal/version"
 )
 
 func newVersionCmd() *cobra.Command {

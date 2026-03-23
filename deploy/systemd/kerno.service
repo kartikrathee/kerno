@@ -1,4 +1,4 @@
-# Copyright 2026 Lowplane contributors
+# Copyright 2026 Optiqor contributors
 # SPDX-License-Identifier: Apache-2.0
 #
 # Systemd unit for kerno daemon mode on bare-metal / VMs.
@@ -15,7 +15,7 @@
 
 [Unit]
 Description=Kerno — eBPF kernel diagnostic engine
-Documentation=https://github.com/lowplane/kerno
+Documentation=https://github.com/optiqor/kerno
 After=network-online.target
 Wants=network-online.target
 

@@ -6,7 +6,7 @@
 
 Kerno is an eBPF-based kernel observability engine for Linux. It traces 6 kernel signal dimensions (syscall latency, TCP flows, OOM events, disk I/O, scheduler delays, FD leaks) and produces diagnostic reports via `kerno doctor`.
 
-**Module:** `github.com/lowplane/kerno`
+**Module:** `github.com/optiqor/kerno`
 **Go version:** 1.25+
 **License:** Apache 2.0
 

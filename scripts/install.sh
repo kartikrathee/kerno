@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
-# Copyright 2026 Lowplane contributors
+# Copyright 2026 Optiqor contributors
 # SPDX-License-Identifier: Apache-2.0
 #
 # Kerno installer — works on any Linux with kernel >= 5.8 and BTF.
 #
 # Usage:
-#   curl -sfL https://raw.githubusercontent.com/lowplane/kerno/main/scripts/install.sh | bash
-#   curl -sfL https://raw.githubusercontent.com/lowplane/kerno/main/scripts/install.sh | bash -s -- --version v0.2.0
-#   curl -sfL https://raw.githubusercontent.com/lowplane/kerno/main/scripts/install.sh | bash -s -- --daemon
+#   curl -sfL https://raw.githubusercontent.com/optiqor/kerno/main/scripts/install.sh | bash
+#   curl -sfL https://raw.githubusercontent.com/optiqor/kerno/main/scripts/install.sh | bash -s -- --version v0.2.0
+#   curl -sfL https://raw.githubusercontent.com/optiqor/kerno/main/scripts/install.sh | bash -s -- --daemon
 #
 # What it does:
 #   1. Detects architecture (amd64/arm64)
@@ -22,7 +22,7 @@
 
 set -euo pipefail
 
-REPO="lowplane/kerno"
+REPO="optiqor/kerno"
 INSTALL_DIR="/usr/local/bin"
 SYSTEMD_DIR="/etc/systemd/system"
 CONFIG_DIR="/etc/kerno"
@@ -36,7 +36,7 @@ while [[ $# -gt 0 ]]; do
         --version) VERSION="$2"; shift 2 ;;
         --daemon)  INSTALL_DAEMON=true; shift ;;
         --help|-h)
-            echo "Usage: curl -sfL https://raw.githubusercontent.com/lowplane/kerno/main/scripts/install.sh | bash -s -- [OPTIONS]"
+            echo "Usage: curl -sfL https://raw.githubusercontent.com/optiqor/kerno/main/scripts/install.sh | bash -s -- [OPTIONS]"
             echo ""
             echo "Options:"
             echo "  --version VERSION   Install a specific version (default: latest)"
@@ -83,7 +83,7 @@ check_btf() {
 check_root() {
     if [ "$(id -u)" -ne 0 ]; then
         echo "This installer needs root privileges."
-        echo "Re-run with: curl -sfL https://raw.githubusercontent.com/lowplane/kerno/main/scripts/install.sh | sudo bash"
+        echo "Re-run with: curl -sfL https://raw.githubusercontent.com/optiqor/kerno/main/scripts/install.sh | sudo bash"
         exit 1
     fi
 }

@@ -1,4 +1,4 @@
-// Copyright 2026 Lowplane contributors
+// Copyright 2026 Optiqor contributors
 // SPDX-License-Identifier: Apache-2.0
 
 package ai
@@ -7,7 +7,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/lowplane/kerno/internal/doctor"
+	"github.com/optiqor/kerno/internal/doctor"
 )
 
 // Cache provides TTL-based caching for AI analysis responses.

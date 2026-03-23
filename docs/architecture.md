@@ -1514,9 +1514,9 @@ Here's a complete trace of what happens when you run `sudo kerno doctor`:
 
 **Version injection:**
 ```makefile
-LDFLAGS = -X github.com/lowplane/kerno/internal/version.Version=$(VERSION)
-          -X github.com/lowplane/kerno/internal/version.Commit=$(COMMIT)
-          -X github.com/lowplane/kerno/internal/version.Date=$(DATE)
+LDFLAGS = -X github.com/optiqor/kerno/internal/version.Version=$(VERSION)
+          -X github.com/optiqor/kerno/internal/version.Commit=$(COMMIT)
+          -X github.com/optiqor/kerno/internal/version.Date=$(DATE)
 ```
 
 ---

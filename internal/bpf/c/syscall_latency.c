@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-// Copyright 2026 Lowplane contributors.
+// Copyright 2026 Optiqor contributors.
 //
 // syscall_latency.c — Measures the time between syscall entry and exit.
 //

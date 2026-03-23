@@ -1,4 +1,4 @@
-// Copyright 2026 Lowplane contributors
+// Copyright 2026 Optiqor contributors
 // SPDX-License-Identifier: Apache-2.0
 
 package ai
@@ -8,7 +8,7 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/lowplane/kerno/internal/doctor"
+	"github.com/optiqor/kerno/internal/doctor"
 )
 
 // FallbackAnalyzer generates template-driven English summaries from findings

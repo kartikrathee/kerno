@@ -2,7 +2,7 @@
 
 ## Overview
 
-Kerno is an open-source project maintained by [Lowplane](https://github.com/lowplane) and governed by a small group of maintainers who are responsible for the project's technical direction, release management, and community health.
+Kerno is an open-source project maintained by [Optiqor](https://github.com/optiqor) and governed by a small group of maintainers who are responsible for the project's technical direction, release management, and community health.
 
 ## Roles
 

@@ -1,4 +1,4 @@
-// Copyright 2026 Lowplane contributors
+// Copyright 2026 Optiqor contributors
 // SPDX-License-Identifier: Apache-2.0
 
 package cli
@@ -15,7 +15,7 @@ import (
 
 	"github.com/spf13/cobra"
 
-	"github.com/lowplane/kerno/internal/ai"
+	"github.com/optiqor/kerno/internal/ai"
 )
 
 const explainSystemPrompt = `You are Kerno, a Linux kernel expert. The user will paste a kernel error message, log line, or stack trace. Your job is to:

@@ -1,4 +1,4 @@
-// Copyright 2026 Lowplane contributors
+// Copyright 2026 Optiqor contributors
 // SPDX-License-Identifier: Apache-2.0
 
 package ai
@@ -8,8 +8,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/lowplane/kerno/internal/collector"
-	"github.com/lowplane/kerno/internal/doctor"
+	"github.com/optiqor/kerno/internal/collector"
+	"github.com/optiqor/kerno/internal/doctor"
 )
 
 // PrivacyMode controls what data is sent to the LLM.

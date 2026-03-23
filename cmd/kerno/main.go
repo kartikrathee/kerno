@@ -1,4 +1,4 @@
-// Copyright 2026 Lowplane contributors
+// Copyright 2026 Optiqor contributors
 // SPDX-License-Identifier: Apache-2.0
 
 // Kerno is an eBPF-based kernel observability engine for Linux.
@@ -9,14 +9,14 @@
 //	sudo kerno start            # daemon mode with Prometheus
 //	kerno version               # print version info
 //
-// See https://github.com/lowplane/kerno for documentation.
+// See https://github.com/optiqor/kerno for documentation.
 package main
 
 import (
 	"fmt"
 	"os"
 
-	"github.com/lowplane/kerno/internal/cli"
+	"github.com/optiqor/kerno/internal/cli"
 )
 
 func main() {
