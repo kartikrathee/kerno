@@ -20,6 +20,9 @@ KERNO_HASH(wakeup_ts, __u32, __u64, MAX_ENTRIES);
 // Output ring buffer.
 KERNO_RINGBUF(events);
 
+// Force BTF emission of struct sched_event so bpf2go can extract it.
+const struct sched_event *_force_btf_sched_event __attribute__((used));
+
 SEC("tracepoint/sched/sched_wakeup")
 int tracepoint_sched_wakeup(struct trace_event_raw_sched_wakeup_template *ctx)
 {

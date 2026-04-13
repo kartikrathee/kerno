@@ -11,8 +11,19 @@
 
 #include "headers/kerno.h"
 
+// Linux socket address family — vmlinux.h does not include <sys/socket.h>.
+#ifndef AF_INET
+#define AF_INET 2
+#endif
+#ifndef AF_INET6
+#define AF_INET6 10
+#endif
+
 // Output ring buffer.
 KERNO_RINGBUF(events);
+
+// Force BTF emission of struct tcp_event so bpf2go can extract it.
+const struct tcp_event *_force_btf_tcp_event __attribute__((used));
 
 // ─── TCP retransmit tracepoint ──────────────────────────────────────────────
 

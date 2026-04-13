@@ -17,8 +17,11 @@ KERNO_HASH(io_start, __u64, __u64, MAX_ENTRIES);
 // Output ring buffer.
 KERNO_RINGBUF(events);
 
+// Force BTF emission of struct disk_event so bpf2go can extract it.
+const struct disk_event *_force_btf_disk_event __attribute__((used));
+
 SEC("tracepoint/block/block_rq_issue")
-int tracepoint_block_rq_issue(struct trace_event_raw_block_rq_issue *ctx)
+int tracepoint_block_rq_issue(struct trace_event_raw_block_rq *ctx)
 {
     __u64 sector = ctx->sector;
     if (sector == 0)

@@ -14,6 +14,9 @@
 // Output ring buffer.
 KERNO_RINGBUF(events);
 
+// Force BTF emission of struct oom_event so bpf2go can extract it.
+const struct oom_event *_force_btf_oom_event __attribute__((used));
+
 SEC("kprobe/oom_kill_process")
 int BPF_KPROBE(kprobe_oom_kill, struct oom_control *oc, const char *message)
 {

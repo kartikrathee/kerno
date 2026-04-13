@@ -14,6 +14,9 @@ KERNO_HASH(syscall_start, __u64, __u64, MAX_ENTRIES);
 // Output ring buffer.
 KERNO_RINGBUF(events);
 
+// Force BTF emission of struct syscall_event so bpf2go can extract it.
+const struct syscall_event *_force_btf_syscall_event __attribute__((used));
+
 SEC("tracepoint/raw_syscalls/sys_enter")
 int tracepoint_sys_enter(struct trace_event_raw_sys_enter *ctx)
 {

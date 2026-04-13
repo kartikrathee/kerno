@@ -17,6 +17,9 @@
 // Output ring buffer.
 KERNO_RINGBUF(events);
 
+// Force BTF emission of struct fd_event so bpf2go can extract it.
+const struct fd_event *_force_btf_fd_event __attribute__((used));
+
 // sys_exit_openat: the return value is the new FD (or negative errno).
 SEC("tracepoint/syscalls/sys_exit_openat")
 int tracepoint_sys_exit_openat(struct trace_event_raw_sys_exit *ctx)
