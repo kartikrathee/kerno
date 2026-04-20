@@ -36,7 +36,11 @@ int tracepoint_sched_wakeup(struct trace_event_raw_sched_wakeup_template *ctx)
 SEC("tracepoint/sched/sched_switch")
 int tracepoint_sched_switch(struct trace_event_raw_sched_switch *ctx)
 {
-    __u32 pid = ctx->next_pid;
+    // Read next_pid via the helper — the verifier rejects direct access
+    // to tracepoint ctx fields beyond a small fixed-offset window on
+    // newer kernels.
+    __u32 pid = 0;
+    bpf_probe_read_kernel(&pid, sizeof(pid), &ctx->next_pid);
 
     __u64 *ts = bpf_map_lookup_elem(&wakeup_ts, &pid);
     if (!ts)
@@ -59,8 +63,8 @@ int tracepoint_sched_switch(struct trace_event_raw_sched_switch *ctx)
     e->pid           = pid;
     e->cpu           = bpf_get_smp_processor_id();
 
-    // Read comm from next task context.
-    __builtin_memcpy(e->comm, ctx->next_comm, TASK_COMM_LEN);
+    // Read comm from next task context via helper for the same reason.
+    bpf_probe_read_kernel(e->comm, TASK_COMM_LEN, ctx->next_comm);
 
     bpf_ringbuf_submit(e, 0);
     return 0;
