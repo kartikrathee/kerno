@@ -30,7 +30,11 @@ func (TCPChurnScenario) Description() string {
 }
 
 // PairedRule implements Scenario.
-func (TCPChurnScenario) PairedRule() string { return "tcp_connection_churn" }
+//
+// Localhost connect/close storms don't induce retransmits or RTT spikes
+// (loopback has near-zero latency), but they do drive scheduler pressure
+// from rapid socket syscalls. That's what the doctor will flag.
+func (TCPChurnScenario) PairedRule() string { return "scheduler_contention" }
 
 // Run implements Scenario.
 func (s TCPChurnScenario) Run(ctx context.Context, opts Options) error {
