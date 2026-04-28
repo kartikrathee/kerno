@@ -54,7 +54,20 @@ int tracepoint_block_rq_complete(struct trace_event_raw_block_rq_completion *ctx
     e->dev           = (__u32)ctx->dev;
     e->nr_bytes      = ctx->nr_sector * 512;
     e->pid           = (__u32)(bpf_get_current_pid_tgid() >> 32);
-    e->op            = ctx->rwbs[0];  // 'R', 'W', 'S', etc.
+
+    // rwbs[0] is the primary op (R/W/D); subsequent positions hold flag
+    // chars (S=sync, F=FUA, A=ahead, M=meta). Promote fsync'd writes to
+    // op='S' so the doctor's SyncLatency tracker actually sees them.
+    char op = ctx->rwbs[0];
+    #pragma unroll
+    for (int i = 1; i < 8; i++) {
+        char c = ctx->rwbs[i];
+        if (c == 'S' || c == 'F') {
+            op = 'S';
+            break;
+        }
+    }
+    e->op = op;
 
     // Zero padding.
     __builtin_memset(e->_pad, 0, sizeof(e->_pad));
