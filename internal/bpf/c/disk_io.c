@@ -58,14 +58,17 @@ int tracepoint_block_rq_complete(struct trace_event_raw_block_rq_completion *ctx
     // rwbs[0] is the primary op (R/W/D); subsequent positions hold flag
     // chars (S=sync, F=FUA, A=ahead, M=meta). Promote fsync'd writes to
     // op='S' so the doctor's SyncLatency tracker actually sees them.
-    char op = ctx->rwbs[0];
-    #pragma unroll
-    for (int i = 1; i < 8; i++) {
-        char c = ctx->rwbs[i];
-        if (c == 'S' || c == 'F') {
-            op = 'S';
-            break;
-        }
+    //
+    // The verifier disallows variable-index reads off a tracepoint ctx
+    // pointer, so copy rwbs into a local buffer via the helper and
+    // inspect that. With a stack-resident buffer, indexed reads are fine.
+    char rwbs[8] = {};
+    bpf_probe_read_kernel(rwbs, sizeof(rwbs), ctx->rwbs);
+    char op = rwbs[0];
+    if (rwbs[1] == 'S' || rwbs[1] == 'F' ||
+        rwbs[2] == 'S' || rwbs[2] == 'F' ||
+        rwbs[3] == 'S' || rwbs[3] == 'F') {
+        op = 'S';
     }
     e->op = op;
 
