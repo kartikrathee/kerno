@@ -135,6 +135,9 @@ func (e *Engine) Diagnose(ctx context.Context, signals *collector.Signals) (*Rep
 		Duration:  signals.Duration,
 		Findings:  findings,
 		Analysis:  analysis,
+		// Carry the raw signals through so the JSON renderer can
+		// surface them for debugging — the pretty renderer ignores it.
+		Signals: signals,
 	}
 
 	// Track events collected.

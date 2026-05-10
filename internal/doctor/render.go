@@ -544,6 +544,7 @@ type jsonReport struct {
 	Findings  []jsonFinding     `json:"findings"`
 	Summary   reportSummary     `json:"summary"`
 	Analysis  *AnalysisResponse `json:"analysis,omitempty"`
+	Signals   interface{}       `json:"signals,omitempty"`
 }
 
 type jsonFinding struct {
@@ -589,6 +590,10 @@ func (r *JSONRenderer) Render(w io.Writer, report *Report) error {
 
 	if analysis, ok := report.Analysis.(*AnalysisResponse); ok {
 		jr.Analysis = analysis
+	}
+
+	if report.Signals != nil {
+		jr.Signals = report.Signals
 	}
 
 	for _, f := range report.Findings {
