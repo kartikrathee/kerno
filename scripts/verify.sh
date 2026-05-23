@@ -107,7 +107,7 @@ phase_build() {
 }
 
 phase_quality() {
-    echo "==> 3. quality gates"
+    echo "==> 3. quality gates (vet + test + race + cover + lint)"
     local n=$1
 
     if go vet ./... 2>/tmp/verify-vet.log; then
@@ -116,18 +116,14 @@ phase_quality() {
         phase_fail "$n" "go vet: $(wc -l < /tmp/verify-vet.log) issues"
     fi
 
-    if go test ./... -count=1 -timeout 120s >/tmp/verify-test.log 2>&1; then
+    # One unified test run covering: pass/fail, race detector, coverage.
+    # Replaces the previous three separate `go test` invocations.
+    if go test -race -cover ./... -count=1 -timeout 180s >/tmp/verify-test.log 2>&1; then
         local pkgs
         pkgs=$(grep -c "^ok " /tmp/verify-test.log)
-        phase_pass "$n" "go test: $pkgs/11 packages pass"
+        phase_pass "$n" "go test -race -cover: $pkgs/11 packages pass, no races"
     else
-        phase_fail "$n" "go test failed (see /tmp/verify-test.log)"
-    fi
-
-    if go test -race ./... -count=1 -timeout 180s >/tmp/verify-race.log 2>&1; then
-        phase_pass "$n" "go test -race: no data races detected"
-    else
-        phase_fail "$n" "go test -race failed (see /tmp/verify-race.log)"
+        phase_fail "$n" "go test -race -cover failed (see /tmp/verify-test.log)"
     fi
 
     if require_cmd golangci-lint; then
@@ -139,15 +135,9 @@ phase_quality() {
     else
         phase_skip "$n" "golangci-lint not installed"
     fi
-}
 
-phase_coverage() {
-    echo "==> 4. coverage floors"
-    local n=$1
-
-    go test -cover ./... 2>&1 | grep "coverage:" >/tmp/verify-coverage.log
-
-    # Per-package floors. Packages with mostly-root paths are exempt.
+    # Per-package coverage floors are checked against the same test
+    # output from above — no re-run.
     declare -A FLOORS=(
         ["aggregator"]=80
         ["ai"]=70
@@ -159,7 +149,7 @@ phase_coverage() {
 
     for pkg in "${!FLOORS[@]}"; do
         floor=${FLOORS[$pkg]}
-        actual=$(grep "/$pkg" /tmp/verify-coverage.log | grep -oE "coverage: [0-9.]+%" | head -1 | tr -dc '0-9.' | cut -d. -f1)
+        actual=$(grep "/$pkg" /tmp/verify-test.log | grep -oE "coverage: [0-9.]+%" | head -1 | tr -dc '0-9.' | cut -d. -f1)
         if [[ -z "$actual" ]]; then
             phase_skip "$n" "$pkg: no coverage data"
             continue
@@ -368,18 +358,26 @@ phase_daemon() {
         phase_fail "$n" "/readyz did not return 200"
     fi
 
-    # /metrics emits prom format
-    if curl -sf "localhost:$port/metrics" | grep -q "^# HELP"; then
-        phase_pass "$n" "/metrics returns valid Prometheus exposition"
+    # /metrics emits prom format. Capture full body so we can show it
+    # on failure and check for both HELP lines and the self-monitoring
+    # metric in the same fetch.
+    curl -sf "localhost:$port/metrics" >/tmp/verify-metrics.txt 2>/dev/null || true
+    if grep -q "^# HELP" /tmp/verify-metrics.txt; then
+        phase_pass "$n" "/metrics returns valid Prometheus exposition ($(wc -l </tmp/verify-metrics.txt) lines)"
     else
-        phase_fail "$n" "/metrics did not return Prom format"
+        phase_fail "$n" "/metrics body missing # HELP — first 5 lines: $(head -5 /tmp/verify-metrics.txt | tr '\n' ' ')"
     fi
 
-    # /metrics includes our self-monitoring metric
-    if curl -sf "localhost:$port/metrics" | grep -q "^kerno_collector_events_total"; then
+    if grep -q "^kerno_collector_events_total" /tmp/verify-metrics.txt; then
         phase_pass "$n" "/metrics includes kerno_collector_events_total"
+    elif grep -q "^kerno_bpf_programs_loaded" /tmp/verify-metrics.txt; then
+        # Metric is registered but no events have flowed yet — acceptable
+        # state right after daemon startup. The pre-init in start.go
+        # should populate the counter at zero, but if even that didn't
+        # happen we surface what's actually there.
+        phase_fail "$n" "/metrics missing kerno_collector_events_total — has $(grep -c '^kerno_' /tmp/verify-metrics.txt) other kerno_ metrics"
     else
-        phase_fail "$n" "/metrics missing kerno_collector_events_total"
+        phase_fail "$n" "/metrics has no kerno_ metrics at all"
     fi
 
     # Graceful shutdown.
@@ -502,7 +500,12 @@ phase_tc_netem() {
             /tmp/verify-tcnetem-doctor.json | head -1)
         phase_pass "$n" "tc netem 30% loss → $rule fired"
     else
-        phase_fail "$n" "neither tcp_retransmit_storm nor tcp_rtt_degradation fired"
+        # Diagnostic: dump the observed TCP signals so we can tune the rule.
+        local rate retx total
+        rate=$(jq -r '.signals.tcp.retransmitRate // "(no data)"' /tmp/verify-tcnetem-doctor.json 2>/dev/null)
+        retx=$(jq -r '.signals.tcp.totalRetransmits // 0' /tmp/verify-tcnetem-doctor.json 2>/dev/null)
+        total=$(jq -r '.signals.tcp.activeConnections // 0' /tmp/verify-tcnetem-doctor.json 2>/dev/null)
+        phase_fail "$n" "no TCP rule fired (retransmitRate=$rate, retx=$retx, conns=$total)"
     fi
 }
 
@@ -604,7 +607,6 @@ declare -A PHASES=(
     [deps]=phase_deps
     [build]=phase_build
     [quality]=phase_quality
-    [coverage]=phase_coverage
     [bpf]=phase_bpf
     [smoke]=phase_smoke
     [doctor]=phase_doctor
@@ -617,7 +619,7 @@ declare -A PHASES=(
     [manifests]=phase_manifests
 )
 
-PHASE_ORDER=(deps build quality coverage bpf smoke doctor chaos induce_detect tc_netem stress_ng oom_pressure daemon manifests)
+PHASE_ORDER=(deps build quality bpf smoke doctor chaos induce_detect tc_netem stress_ng oom_pressure daemon manifests)
 
 # ─── Argument parsing ─────────────────────────────────────────────────────
 
