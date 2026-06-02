@@ -67,8 +67,13 @@ func initConfig(cmd *cobra.Command) error {
 	v := viper.New()
 
 	// Config file discovery.
-	if cfgFile != "" {
-		v.SetConfigFile(cfgFile)
+	// Precedence: --config flag > KERNO_CONFIG env > auto-discover.
+	resolved := cfgFile
+	if resolved == "" {
+		resolved = os.Getenv("KERNO_CONFIG")
+	}
+	if resolved != "" {
+		v.SetConfigFile(resolved)
 	} else {
 		v.SetConfigName("config")
 		v.SetConfigType("yaml")
@@ -94,8 +99,9 @@ func initConfig(cmd *cobra.Command) error {
 	if err := v.ReadInConfig(); err != nil {
 		var notFound viper.ConfigFileNotFoundError
 		if !errors.As(err, &notFound) {
-			// Only error if the file exists but can't be parsed.
-			if cfgFile != "" {
+			// Only error if the file was explicitly requested (flag or
+			// env) and can't be parsed.
+			if resolved != "" {
 				return fmt.Errorf("reading config file: %w", err)
 			}
 		}

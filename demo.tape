@@ -4,8 +4,8 @@
 # vhs tape — records the kerno doctor MVP demo for the README hero GIF.
 #
 # IMPORTANT: vhs records a non-interactive shell that cannot type a sudo
-# password. Either run vhs itself as root (Makefile does this) or
-# pre-grant CAP_BPF to ./bin/kerno with `setcap` so no sudo is needed.
+# password. The Makefile runs vhs itself as root so the recorded shell
+# is already privileged — no `sudo` typed in this tape.
 #
 # Run with:    make demo
 # Direct:      sudo $(which vhs) demo.tape
@@ -22,6 +22,23 @@ Set Theme      "Dracula"
 Set TypingSpeed 35ms
 Set Padding    20
 
+# ── silent setup ──
+# Hide the prompt-cleanup, PATH wiring, and demo-config selection so
+# the viewer sees `kerno doctor` — the clean marketing command — and
+# nothing else. KERNO_CONFIG points at the test-tuned thresholds that
+# fire on synthetic chaos load (production defaults are calibrated for
+# real incidents and won't trip on a healthy SSD dev box).
+Hide
+Type "export PS1='$ '"
+Enter
+Type "export PATH=$(pwd)/bin:$PATH"
+Enter
+Type "export KERNO_CONFIG=$(pwd)/scripts/verify-config.yaml"
+Enter
+Type "clear"
+Enter
+Show
+
 # ── intro ──
 Type "# Kerno doctor — kernel-level incident diagnosis in one command"
 Sleep 1s
@@ -31,20 +48,20 @@ Sleep 500ms
 Type "# Step 1: induce a synthetic disk-fsync bottleneck"
 Sleep 600ms
 Enter
-Type "./bin/kerno chaos --induce disk-sat --duration 25s --intensity high --yes &"
+Type "kerno chaos --induce disk-sat --duration 25s --intensity high --yes &"
 Enter
 Sleep 2s
 
+Hide
 Type "clear"
 Enter
-Sleep 500ms
+Show
 
-# ── doctor run ── (recorded shell is root via 'sudo vhs ...', so no
-# 'sudo' needed inside — that's what unblocks the password prompt.)
-Type "# Step 2: ask kerno what's wrong"
+# ── doctor run — the hero shot ──
+Type "# Step 2: ask the kernel what's wrong"
 Sleep 600ms
 Enter
-Type "./bin/kerno --config scripts/verify-config.yaml doctor --duration 10s"
+Type "kerno doctor --duration 10s"
 Enter
 
 # Doctor takes ~10s to collect + a couple seconds to render the
