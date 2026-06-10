@@ -43,7 +43,7 @@ func main() {
 		bpf.NewFDTrackLoader(logger),
 	}
 
-	var closers []io.Closer
+	closers := make([]io.Closer, 0, len(loaders))
 	defer func() {
 		for _, c := range closers {
 			_ = c.Close()

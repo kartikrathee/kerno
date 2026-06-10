@@ -302,7 +302,7 @@ func evalSyscallLatencyHigh(s *collector.Signals, t config.DoctorThresholds) []F
 	warningNs := time.Duration(t.SyscallP99WarningNs)
 	criticalNs := time.Duration(t.SyscallP99CriticalNs)
 
-	var hot []collector.SyscallEntry
+	hot := make([]collector.SyscallEntry, 0, len(s.Syscall.Entries))
 	sev := SeverityWarning
 	for _, entry := range s.Syscall.Entries {
 		// Voluntary-blocking syscalls (futex, epoll_wait, poll, ...)
@@ -435,7 +435,7 @@ func evalSyscallErrorRate(s *collector.Signals) []Finding {
 		entry collector.SyscallEntry
 		rate  float64
 	}
-	var entries []hot
+	entries := make([]hot, 0, len(s.Syscall.Entries))
 	sev := SeverityWarning
 	for _, entry := range s.Syscall.Entries {
 		// Blocking syscalls return EAGAIN/ETIMEDOUT/ECHILD as part of

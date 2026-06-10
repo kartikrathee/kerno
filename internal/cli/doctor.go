@@ -195,7 +195,8 @@ func (noopCloser) Close() error { return nil }
 // cleanup closures (idempotent), and counters for the report footer.
 func buildCollectors(logger *slog.Logger) (*collector.Registry, []func(), int, int) {
 	registry := collector.NewRegistry(logger)
-	var closers []func()
+	// Up to 7 collectors are registered (6 eBPF + procfs memory).
+	closers := make([]func(), 0, 7)
 
 	type loaderRegistration struct {
 		name    string
