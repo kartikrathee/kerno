@@ -62,7 +62,7 @@ func (r *Registry) Register(c Collector) error {
 	}
 
 	r.collectors[c.Name()] = c
-	r.logger.Info("registered collector", "name", c.Name())
+	r.logger.Debug("registered collector", "name", c.Name())
 	return nil
 }
 
@@ -74,7 +74,7 @@ func (r *Registry) StartAll(ctx context.Context) error {
 	defer r.mu.RUnlock()
 
 	for name, c := range r.collectors {
-		r.logger.Info("starting collector", "name", name)
+		r.logger.Debug("starting collector", "name", name)
 		if err := c.Start(ctx); err != nil {
 			return fmt.Errorf("starting collector %q: %w", name, err)
 		}
@@ -88,7 +88,7 @@ func (r *Registry) StopAll() {
 	defer r.mu.RUnlock()
 
 	for name, c := range r.collectors {
-		r.logger.Info("stopping collector", "name", name)
+		r.logger.Debug("stopping collector", "name", name)
 		c.Stop()
 	}
 }

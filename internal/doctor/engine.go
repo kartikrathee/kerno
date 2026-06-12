@@ -103,7 +103,7 @@ func (e *Engine) Diagnose(ctx context.Context, signals *collector.Signals) (*Rep
 
 	// Phase 1: Evaluate deterministic rules.
 	findings := Evaluate(signals, e.thresholds)
-	e.logger.Info("rules evaluated",
+	e.logger.Debug("rules evaluated",
 		"findings", len(findings),
 		"duration_ms", time.Since(start).Milliseconds(),
 	)

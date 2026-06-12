@@ -29,6 +29,7 @@ func newDoctorCmd() *cobra.Command {
 		output     string
 		useAI      bool
 		noAI       bool
+		quiet      bool
 	)
 
 	cmd := &cobra.Command{
@@ -76,6 +77,7 @@ Add --ai to enrich findings with AI-powered analysis (requires API key).`,
 				interval:   interval,
 				output:     output,
 				aiEnabled:  aiEnabled,
+				quiet:      quiet,
 			})
 		},
 	}
@@ -88,6 +90,7 @@ Add --ai to enrich findings with AI-powered analysis (requires API key).`,
 	flags.StringVarP(&output, "output", "o", "", "output format: pretty, json (overrides global --output)")
 	flags.BoolVar(&useAI, "ai", false, "enable AI-powered analysis (requires API key)")
 	flags.BoolVar(&noAI, "no-ai", false, "disable AI analysis even if enabled in config")
+	flags.BoolVarP(&quiet, "quiet", "q", false, "only emit critical/warning findings (CI-friendly)")
 
 	return cmd
 }
@@ -99,6 +102,7 @@ type doctorOpts struct {
 	interval   time.Duration
 	output     string
 	aiEnabled  bool
+	quiet      bool
 }
 
 func runDoctor(ctx context.Context, opts doctorOpts) error {
@@ -171,7 +175,7 @@ func runDoctor(ctx context.Context, opts doctorOpts) error {
 			break
 		}
 
-		logger.Info("waiting for next cycle", "interval", opts.interval)
+		logger.Debug("waiting for next cycle", "interval", opts.interval)
 		select {
 		case <-ctx.Done():
 			return nil
@@ -370,7 +374,7 @@ func runDiagnosticCycle(
 	opts doctorOpts,
 	logger *slog.Logger,
 ) error {
-	logger.Info("starting kernel diagnostic",
+	logger.Debug("starting kernel diagnostic",
 		"duration", opts.duration,
 		"ai", opts.aiEnabled,
 	)
@@ -389,9 +393,39 @@ func runDiagnosticCycle(
 	}
 	defer registry.StopAll()
 
-	// Show progress to user (stderr so it doesn't pollute JSON output).
+	// Live progress spinner — only when stdout is going to pretty
+	// output AND stderr is a TTY. JSON output, piped output, and CI
+	// runs (NO_COLOR) get a single-line status instead.
+	showSpinner := opts.output != "json" && isTerminal()
 	if opts.output != "json" {
-		fmt.Fprintf(os.Stderr, "Collecting kernel signals for %s...\n", opts.duration)
+		if showSpinner {
+			spinner := NewSpinner(os.Stderr, os.Getenv("NO_COLOR") != "")
+			spinner.SetPhase("collecting kernel signals")
+			spinner.SetEventsFn(func() uint64 {
+				snap := registry.Signals(opts.duration)
+				var n uint64
+				if snap.Syscall != nil {
+					n += snap.Syscall.TotalCount
+				}
+				if snap.Sched != nil {
+					n += snap.Sched.TotalCount
+				}
+				if snap.OOM != nil && snap.OOM.Count > 0 {
+					n += uint64(snap.OOM.Count) //nolint:gosec // Count is a slice len; non-negative
+				}
+				if snap.DiskIO != nil {
+					n += snap.DiskIO.TotalReads + snap.DiskIO.TotalWrites + snap.DiskIO.TotalSyncs
+				}
+				if snap.FD != nil {
+					n += snap.FD.TotalOpens + snap.FD.TotalCloses
+				}
+				return n
+			})
+			go spinner.Run(collectCtx, opts.duration)
+			defer spinner.Stop()
+		} else {
+			fmt.Fprintf(os.Stderr, "Collecting kernel signals for %s...\n", opts.duration)
+		}
 	}
 
 	// Wait for collection window to complete.
@@ -400,7 +434,7 @@ func runDiagnosticCycle(
 	// Check if we were canceled by the parent context (Ctrl+C) vs timeout.
 	if ctx.Err() != nil {
 		if opts.output != "json" {
-			fmt.Fprintf(os.Stderr, "Interrupted — analyzing partial data.\n")
+			fmt.Fprintf(os.Stderr, "\nInterrupted — analyzing partial data.\n")
 		}
 	}
 
@@ -414,7 +448,27 @@ func runDiagnosticCycle(
 	}
 
 	// Phase 4: Render the report.
-	if err := renderer.Render(os.Stdout, report); err != nil {
+	//
+	// In --quiet mode, we suppress the full pretty rendering when the
+	// system is healthy (only critical/warning findings warrant
+	// output). JSON mode is unaffected — machine consumers expect a
+	// stable shape every time.
+	if opts.quiet && opts.output != "json" {
+		hasIssues := false
+		for i := range report.Findings {
+			if report.Findings[i].Severity >= doctor.SeverityWarning {
+				hasIssues = true
+				break
+			}
+		}
+		if !hasIssues {
+			// Single-line "all clear" — CI-friendly.
+			fmt.Fprintf(os.Stdout, "kerno: ✓ all kernel signals nominal (%s window, %d events)\n",
+				opts.duration, report.EventsCollected)
+		} else if err := renderer.Render(os.Stdout, report); err != nil {
+			return fmt.Errorf("rendering report: %w", err)
+		}
+	} else if err := renderer.Render(os.Stdout, report); err != nil {
 		return fmt.Errorf("rendering report: %w", err)
 	}
 

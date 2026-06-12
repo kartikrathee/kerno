@@ -26,12 +26,34 @@ var (
 func New() *cobra.Command {
 	root := &cobra.Command{
 		Use:   "kerno",
-		Short: "Kernel-level observability engine for Linux",
-		Long: `Kerno is an eBPF-based kernel observability engine that provides
-real-time diagnostics, performance monitoring, and actionable insights
-for Linux systems and Kubernetes clusters.
+		Short: "Kernel-level incident diagnosis engine (eBPF)",
+		Long: `Kerno asks the kernel what's wrong.
 
-Run 'kerno doctor' for a 30-second automated kernel diagnostic.`,
+When something breaks in production — slow API, OOM, retransmits,
+runqueue contention — your APM dashboard is green and the kernel
+already knew minutes ago. Kerno bridges the gap.
+
+The MVP is one command:
+    sudo kerno doctor
+
+It runs for 30 seconds, collects eBPF signals across 6 dimensions
+(syscalls, TCP, OOM, disk I/O, scheduler, FDs), correlates them, and
+prints a ranked diagnostic report with plain-English causes, evidence,
+and copy-paste fix steps.`,
+		Example: `  # The golden command — what to run when production breaks
+  sudo kerno doctor
+
+  # Quick 10s check, machine-readable, exits 1 on critical findings
+  sudo kerno doctor --duration 10s --output json --exit-code
+
+  # AI-enriched root cause analysis (needs KERNO_AI_API_KEY)
+  sudo kerno doctor --ai
+
+  # Live-stream a specific kernel dimension
+  sudo kerno trace syscall --pid 1234
+
+  # Daemon mode for Prometheus + Kubernetes DaemonSet
+  sudo kerno start --prometheus`,
 		SilenceUsage:  true,
 		SilenceErrors: true,
 		PersistentPreRunE: func(cmd *cobra.Command, _ []string) error {
@@ -41,23 +63,38 @@ Run 'kerno doctor' for a 30-second automated kernel diagnostic.`,
 
 	// Global flags.
 	pf := root.PersistentFlags()
-	pf.StringVar(&cfgFile, "config", "", "config file (default: /etc/kerno/config.yaml)")
-	pf.String("log-level", "info", "log level: debug, info, warn, error")
-	pf.String("log-format", "text", "log format: text, json")
-	pf.String("output", "pretty", "output format: pretty, json")
-	pf.Bool("no-color", false, "disable colored output")
+	pf.StringVar(&cfgFile, "config", "", "config file (default: $KERNO_CONFIG, /etc/kerno/config.yaml)")
+	pf.String("log-level", "info", "log verbosity: debug, info, warn, error")
+	pf.String("log-format", "text", "log encoding: text (human), json (structured)")
+	pf.String("output", "pretty", "output format: pretty (terminal), json (machine)")
+	pf.Bool("no-color", false, "disable colored output (also honors $NO_COLOR)")
 
-	// Register sub-commands.
-	root.AddCommand(
-		newDoctorCmd(),
-		newExplainCmd(),
-		newPredictCmd(),
-		newVersionCmd(),
-		newStartCmd(),
-		newTraceCmd(),
-		newWatchCmd(),
-		newChaosCmd(),
+	// Group sub-commands by purpose so --help reads as a workflow,
+	// not an alphabetic dump.
+	doctorCmd := newDoctorCmd()
+	explainCmd := newExplainCmd()
+	predictCmd := newPredictCmd()
+	startCmd := newStartCmd()
+	traceCmd := newTraceCmd()
+	watchCmd := newWatchCmd()
+	chaosCmd := newChaosCmd()
+	versionCmd := newVersionCmd()
+
+	root.AddGroup(
+		&cobra.Group{ID: "diagnose", Title: "Incident diagnosis:"},
+		&cobra.Group{ID: "observe", Title: "Live observability:"},
+		&cobra.Group{ID: "ops", Title: "Operations:"},
 	)
+	doctorCmd.GroupID = "diagnose"
+	explainCmd.GroupID = "diagnose"
+	predictCmd.GroupID = "diagnose"
+	traceCmd.GroupID = "observe"
+	watchCmd.GroupID = "observe"
+	startCmd.GroupID = "ops"
+	chaosCmd.GroupID = "ops"
+	versionCmd.GroupID = "ops"
+
+	root.AddCommand(doctorCmd, explainCmd, predictCmd, traceCmd, watchCmd, startCmd, chaosCmd, versionCmd)
 
 	return root
 }
