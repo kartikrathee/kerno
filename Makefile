@@ -179,18 +179,28 @@ verify: build bpf-verify
 ## tends to fail because it loses the graphical/session env. The caps
 ## are scoped to ./bin/kerno only and are wiped on rebuild, so this
 ## is no riskier than `sudo kerno doctor`.
+##
+## We resolve vhs from $PATH first, then $(go env GOBIN), then
+## $HOME/go/bin — Go-installed binaries often aren't on PATH inside
+## make's stripped environment.
 demo: build bpf-verify
-	@if ! command -v vhs >/dev/null; then \
-		echo "vhs not installed. Install with:"; \
+	@VHS=$$(command -v vhs 2>/dev/null); \
+	if [ -z "$$VHS" ]; then VHS=$$(go env GOBIN 2>/dev/null)/vhs; fi; \
+	if [ ! -x "$$VHS" ]; then VHS="$$HOME/go/bin/vhs"; fi; \
+	if [ ! -x "$$VHS" ]; then \
+		echo "vhs not found. Install with:"; \
 		echo "  sudo apt-get install -y ttyd ffmpeg"; \
 		echo "  go install github.com/charmbracelet/vhs@latest"; \
-		echo "  export PATH=\"\$$HOME/go/bin:\$$PATH\""; \
+		echo "  # then either:"; \
+		echo "  #   export PATH=\"\$$HOME/go/bin:\$$PATH\"      (persistent)"; \
+		echo "  #   or re-run 'make demo' (it now auto-finds \$$HOME/go/bin)"; \
 		exit 1; \
-	fi
-	@echo "==> Granting BPF capabilities to bin/kerno (sudo password may be required)"
-	@sudo setcap 'cap_bpf,cap_perfmon,cap_sys_ptrace,cap_sys_admin,cap_net_admin,cap_dac_read_search+ep' ./bin/kerno
-	@echo "==> Recording demo.gif (no further sudo needed; vhs runs as $$USER)"
-	vhs demo.tape
+	fi; \
+	echo "==> Using vhs at $$VHS"; \
+	echo "==> Granting BPF capabilities to bin/kerno (sudo password may be required)"; \
+	sudo setcap 'cap_bpf,cap_perfmon,cap_sys_ptrace,cap_sys_admin,cap_net_admin,cap_dac_read_search+ep' ./bin/kerno; \
+	echo "==> Recording demo.gif (no further sudo needed; vhs runs as $$USER)"; \
+	"$$VHS" demo.tape
 	@echo "Wrote demo.gif ($$(du -h demo.gif | cut -f1))"
 	@if command -v gifsicle >/dev/null; then \
 		gifsicle --optimize=3 demo.gif -o demo.gif && \
