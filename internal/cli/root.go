@@ -26,15 +26,18 @@ var (
 func New() *cobra.Command {
 	root := &cobra.Command{
 		Use:   "kerno",
-		Short: "Kernel-level incident diagnosis engine (eBPF)",
+		Short: "Production incident diagnosis engine for Kubernetes (eBPF)",
 		Long: `Kerno asks the kernel what's wrong.
 
-When something breaks in production — slow API, OOM, retransmits,
+When something breaks in production - slow API, OOM, retransmits,
 runqueue contention — your APM dashboard is green and the kernel
-already knew minutes ago. Kerno bridges the gap.
+already knew minutes ago. Kerno bridges the gap, primarily for
+Kubernetes (DaemonSet, Helm, Prometheus) and the same single binary
+runs on bare metal, VMs, EC2, GCE - wherever Linux lives.
 
 The MVP is one command:
-    sudo kerno doctor
+    kubectl -n kerno-system exec ds/kerno -- kerno doctor   # K8s
+    sudo kerno doctor                                       # bare metal
 
 It runs for 30 seconds, collects eBPF signals across 6 dimensions
 (syscalls, TCP, OOM, disk I/O, scheduler, FDs), correlates them, and

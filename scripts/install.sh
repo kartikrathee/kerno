@@ -110,7 +110,8 @@ download() {
 
 # ── Main ─────────────────────────────────────────────────────────────
 main() {
-    echo "==> Kerno installer"
+    echo "==> Kerno installer - bare metal / VM / cloud instance"
+    echo "    (For Kubernetes: helm install kerno ./deploy/helm/kerno)"
     echo ""
 
     check_root

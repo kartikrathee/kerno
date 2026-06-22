@@ -2,10 +2,12 @@
 
 # KERNO
 
-### `kerno doctor` — the one-command kernel diagnostic
+### The production incident diagnosis engine for Kubernetes
 
 **Your cluster broke. Your dashboards are green. Users are paging.**
 **Run `kerno doctor`. 30 seconds. Root cause. Plain English.**
+
+<sub>Same single binary runs on bare metal, VMs, EC2, GCE - wherever Linux lives.</sub>
 
 [![CI](https://github.com/optiqor/kerno/actions/workflows/ci.yml/badge.svg)](https://github.com/optiqor/kerno/actions/workflows/ci.yml)
 [![Go Report Card](https://goreportcard.com/badge/github.com/optiqor/kerno)](https://goreportcard.com/report/github.com/optiqor/kerno)
@@ -22,18 +24,22 @@
 
 ---
 
-## The MVP: `kerno doctor`
+## What is Kerno?
 
-Every other observability tool watches your application. **Kerno asks the kernel.**
-When something breaks in production, the kernel knew minutes before your dashboards. Hours before your users.
+Kerno is a **Kubernetes-native incident diagnosis engine** built on eBPF.
+It runs as a DaemonSet on every node, watches the kernel - not your app - and answers a single question on demand:
+
+> *Why is production broken right now?*
 
 ```bash
-sudo kerno doctor
+kubectl -n kerno-system exec ds/kerno -- kerno doctor
 ```
 
-That single command runs for 30 seconds, collects eBPF signals across **6 dimensions** simultaneously (syscalls, TCP, OOM, disk I/O, scheduler, FDs), correlates them, and prints a ranked diagnostic report with **plain-English causes, evidence, and actionable fixes** - no setup, no config, no dashboards.
+30 seconds later you get a ranked diagnostic report with **plain-English causes, evidence, ETAs, and copy-paste fix steps** - no dashboards to wire, no query language to learn, no agents in your app.
 
-**Free. Open source. Kubernetes-native. Works on bare metal too.**
+The kernel knows minutes before your APM. Hours before your users. Kerno makes that visible.
+
+**Same binary outside Kubernetes too.** `curl | bash` it onto any bare-metal box, EC2 instance, or systemd VM and `sudo kerno doctor` works exactly the same.
 
 ## Why Kerno?
 
@@ -84,9 +90,9 @@ Kerno runs as a DaemonSet on every node, streams kernel signals through eBPF wit
 kubectl -n kerno-system exec ds/kerno -- kerno doctor
 ```
 
-One command. 30 seconds later, you get the report shown in the [demo above](#kerno) — ranked findings, plain-English causes, evidence, and copy-paste fix steps.
+One command. 30 seconds later, you get the report shown in the [demo above](#kerno) - ranked findings, plain-English causes, evidence, and copy-paste fix steps.
 
-That's the entire debugging loop — from page to root cause — in a single command.
+That's the entire debugging loop - from page to root cause - in a single command.
 
 ---
 
@@ -107,67 +113,50 @@ Kerno is the only eBPF tool in the Kubernetes ecosystem that produces a ranked, 
 
 ## Quick Start
 
-### Prerequisites
+> **Requires:** kernel **5.8+** with BTF (every major managed K8s qualifies: EKS, GKE, AKS, DOKS, Linode, Civo). For raw manifests/Helm you'll need cluster-admin.
 
-- Kubernetes **1.25+** with nodes running kernel **5.8+** (BTF enabled - all major managed offerings qualify: EKS, GKE, AKS, DOKS, Linode, Civo)
-- `kubectl` with cluster-admin (to create the namespace + RBAC)
-
-### Install on Kubernetes (primary)
+### 1 · Kubernetes (primary)
 
 ```bash
-# Helm
 helm install kerno ./deploy/helm/kerno \
   -n kerno-system --create-namespace
-
-# Or raw manifests
-kubectl apply -f deploy/k8s/
 ```
 
-That's it. Within 30 seconds Kerno is running as a DaemonSet on every node.
-
-### Run an incident report on a live cluster
+Within 30 seconds Kerno is running as a DaemonSet on every node, watching the kernel via eBPF, exposing `/metrics` for Prometheus, and ready for `kerno doctor`.
 
 ```bash
-# Diagnose the whole cluster - 30 seconds of real kernel data
+# Cluster-wide incident report - 30 seconds of real kernel data
 kubectl -n kerno-system exec ds/kerno -- kerno doctor
 
-# JSON output for on-call runbooks / Slack bots
-kubectl -n kerno-system exec ds/kerno -- kerno doctor --output json
+# CI-friendly: machine-readable JSON, exits non-zero on critical findings
+kubectl -n kerno-system exec ds/kerno -- kerno doctor --output json --exit-code
 
-# With AI-powered root cause analysis
+# AI-enriched root cause analysis (set the API key once)
 kubectl -n kerno-system set env ds/kerno KERNO_AI_API_KEY=sk-...
 kubectl -n kerno-system exec ds/kerno -- kerno doctor --ai
 ```
 
-### Continuous metrics (for Prometheus + Alertmanager)
+ServiceMonitor for the Prometheus Operator is built-in. Raw manifests live at [`deploy/k8s/`](deploy/k8s/) if you don't use Helm.
+
+---
+
+### 2 · Bare metal · VMs · EC2 · GCE
+
+The same binary, the same command. No Kubernetes required.
 
 ```bash
-kubectl -n kerno-system port-forward ds/kerno 9090:9090
-curl localhost:9090/metrics
-```
-
-ServiceMonitor support is built-in when the Prometheus Operator is installed.
-
-### Bare metal / VMs (secondary)
-
-For standalone Linux servers outside Kubernetes:
-
-```bash
-# One-liner install
 curl -sfL https://raw.githubusercontent.com/optiqor/kerno/main/scripts/install.sh | sudo bash
 sudo kerno doctor
-
-# Pin a specific version: --version v0.1.0
 ```
 
-Or run as a long-lived systemd service with Prometheus metrics:
+Long-lived systemd service with `/metrics` for Prometheus:
 
 ```bash
 curl -sfL https://raw.githubusercontent.com/optiqor/kerno/main/scripts/install.sh | sudo bash -s -- --daemon
 journalctl -u kerno -f
 ```
 
-### Docker (ad-hoc, any host)
+### 3 · Docker (ad-hoc, any host with a privileged daemon)
 
 ```bash
 docker run --rm --privileged --pid=host \
@@ -175,10 +164,10 @@ docker run --rm --privileged --pid=host \
   -v /sys/kernel/btf:/sys/kernel/btf:ro \
   -v /sys/fs/bpf:/sys/fs/bpf \
   -v /proc:/proc:ro \
-  ghcr.io/optiqor/kerno:v0.1.0 doctor
+  ghcr.io/optiqor/kerno:latest doctor
 ```
 
-Multi-arch images (`linux/amd64`, `linux/arm64`) published to GHCR on every release.
+Multi-arch (`linux/amd64`, `linux/arm64`) images published to GHCR on every release.
 
 ---
 
@@ -587,10 +576,10 @@ ai:
 
 See [TODO.md](TODO.md) for the full plan. Headlines:
 
-- **v0.1** — DaemonSet, 6 eBPF collectors, 11 rules, Prometheus, AI post-processor, 7 chaos scenarios, 13-phase verify pipeline — **shipped, all gates green on kernel 6.17**
-- **v0.2** — CRD for cluster-wide incident policies, OpenTelemetry OTLP export, Grafana dashboards, sliding-window aggregation
-- **v0.3** — historical incident replay, SLO-linked alerts, Slack / PagerDuty integrations
-- **v1.0** — multi-cluster control plane, managed offering (Optiqor Cloud)
+- **v0.1** - DaemonSet, 6 eBPF collectors, 11 rules, Prometheus, AI post-processor, 7 chaos scenarios, 13-phase verify pipeline - **shipped, all gates green on kernel 6.17**
+- **v0.2** - CRD for cluster-wide incident policies, OpenTelemetry OTLP export, Grafana dashboards, sliding-window aggregation
+- **v0.3** - historical incident replay, SLO-linked alerts, Slack / PagerDuty integrations
+- **v1.0** - multi-cluster control plane, managed offering (Optiqor Cloud)
 
 ---
 
@@ -600,7 +589,7 @@ See [TODO.md](TODO.md) for the full plan. Headlines:
 # Requirements: Go 1.25+
 # Optional for real eBPF: clang 14+, libbpf-dev, llvm, bpftool
 
-make build          # Build binary (uses BPF stubs — no clang needed)
+make build          # Build binary (uses BPF stubs - no clang needed)
 make generate       # Run bpf2go to produce *_bpfel.go from C sources
 make bpf            # Compile eBPF C programs to .o
 make bpf-verify     # Build the standalone kernel-verifier load harness
