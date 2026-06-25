@@ -234,8 +234,10 @@ type topKey struct {
 
 func renderSyscallTop(agg map[topKey]*syscallTopEntry, n int) {
 	entries := make([]*syscallTopEntry, 0, len(agg))
+	totalEvents := uint64(0)
 	for _, e := range agg {
 		entries = append(entries, e)
+		totalEvents += e.Count
 	}
 
 	// Sort by p99 descending.
@@ -247,25 +249,35 @@ func renderSyscallTop(agg map[topKey]*syscallTopEntry, n int) {
 		entries = entries[:n]
 	}
 
-	if isTerminal() {
-		fmt.Print("\033[H\033[2J") // clear screen
-	}
+	s := newLiveStyle()
+	clearScreen(os.Stdout)
+	liveHeader(os.Stdout, s, "kerno trace syscall",
+		fmt.Sprintf("top %d by p99 · last 1s", len(entries)))
+	fmt.Println()
+	fmt.Println(liveColumnHeader(s, "  %-16s %-16s %8s %10s %10s %10s",
+		"SYSCALL", "PROCESS", "COUNT", "P50", "P95", "P99"))
+	fmt.Println("  " + liveDivider(s, 76))
 
-	fmt.Printf("[%s] Syscall Latency Top — %d entries (last 1s)\n",
-		time.Now().Format("15:04:05"), len(entries))
-	fmt.Printf("%-16s %-16s %8s %10s %10s %10s\n",
-		"SYSCALL", "PROCESS", "COUNT", "P50", "P95", "P99")
-	fmt.Println(strings.Repeat("─", 78))
+	// Threshold visual cue: warn at 10ms p99, critical at 100ms p99.
+	const (
+		warnP99 = 10 * time.Millisecond
+		critP99 = 100 * time.Millisecond
+	)
 
 	for _, e := range entries {
-		fmt.Printf("%-16s %-16s %8d %10s %10s %10s\n",
+		p50 := percentile(e.Latencies, 50)
+		p95 := percentile(e.Latencies, 95)
+		p99 := percentile(e.Latencies, 99)
+		color := thresholdColor(s, p99, warnP99, critP99)
+		fmt.Printf("  %-16s %-16s %8d %10s %10s %s%10s%s\n",
 			e.Name, e.Comm, e.Count,
-			formatLatency(percentile(e.Latencies, 50)),
-			formatLatency(percentile(e.Latencies, 95)),
-			formatLatency(percentile(e.Latencies, 99)),
+			formatLatency(p50),
+			formatLatency(p95),
+			color, formatLatency(p99), s.reset,
 		)
 	}
 	fmt.Println()
+	liveFooter(os.Stdout, s, totalEvents, time.Second)
 }
 
 // percentile computes the p-th percentile from a slice of durations.

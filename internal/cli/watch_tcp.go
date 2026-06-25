@@ -11,7 +11,6 @@ import (
 	"os"
 	"os/signal"
 	"sort"
-	"strings"
 	"sync"
 	"syscall"
 	"time"
@@ -236,15 +235,19 @@ func renderTCPSummary(entries []tcpSummaryEntry, interval time.Duration) {
 		totalEvents += e.Stats.EventCount
 	}
 
-	if isTerminal() {
-		fmt.Print("\033[H\033[2J")
-	}
+	s := newLiveStyle()
+	clearScreen(os.Stdout)
+	liveHeader(os.Stdout, s, "kerno watch tcp",
+		fmt.Sprintf("%d connections · last %s", len(entries), interval))
+	fmt.Println()
+	fmt.Println(liveColumnHeader(s, "  %-21s %-21s %10s %10s %8s %-16s",
+		"SRC", "DST", "RTT(p50)", "RTT(p99)", "RETRANS", "PROCESS"))
+	fmt.Println("  " + liveDivider(s, 88))
 
-	fmt.Printf("[%s] TCP Connections (last %s) — %d events, %d connections\n",
-		time.Now().Format("15:04:05"), interval, totalEvents, len(entries))
-	fmt.Printf("%-21s %-21s %10s %10s %8s %-16s\n",
-		"SRC", "DST", "RTT(p50)", "RTT(p99)", "RETRANS", "PROCESS")
-	fmt.Println(strings.Repeat("─", 90))
+	const (
+		rttWarn = 5 * time.Millisecond
+		rttCrit = 50 * time.Millisecond
+	)
 
 	for _, e := range entries {
 		src := fmt.Sprintf("%s:%d", e.Key.SAddr, e.Key.SPort)
@@ -252,15 +255,27 @@ func renderTCPSummary(entries []tcpSummaryEntry, interval time.Duration) {
 
 		rttP50 := "-"
 		rttP99 := "-"
+		rttColor := ""
 		if len(e.Stats.RTTs) > 0 {
 			rttP50 = formatLatency(e.RTTP50)
 			rttP99 = formatLatency(e.RTTP99)
+			rttColor = thresholdColor(s, e.RTTP99, rttWarn, rttCrit)
 		}
 
-		fmt.Printf("%-21s %-21s %10s %10s %8d %-16s\n",
-			src, dst, rttP50, rttP99, e.Stats.Retransmits, e.Key.Comm)
+		// Retransmits are always concerning — color any non-zero value.
+		retxColor := ""
+		if e.Stats.Retransmits > 0 && s.color {
+			retxColor = s.red + s.bold
+		}
+
+		fmt.Printf("  %-21s %-21s %10s %s%10s%s %s%8d%s %-16s\n",
+			src, dst, rttP50,
+			rttColor, rttP99, s.reset,
+			retxColor, e.Stats.Retransmits, s.reset,
+			e.Key.Comm)
 	}
 	fmt.Println()
+	liveFooter(os.Stdout, s, totalEvents, interval)
 }
 
 type tcpSummaryJSONOut struct {

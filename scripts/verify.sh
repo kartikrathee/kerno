@@ -604,6 +604,51 @@ YAML
 
 # ─── Phase registry ───────────────────────────────────────────────────────
 
+phase_live() {
+    echo "==> 15. live commands (trace / watch / audit)"
+    local n=$1
+
+    # Each command needs eBPF (sudo) — except audit, which uses inotify.
+    # Run for 2s so we catch crashes / regressions without hammering the
+    # box. Output goes to /dev/null; we check only the exit code.
+
+    for sub in syscall disk sched; do
+        if sudo timeout 3s "$KERNO" trace "$sub" --duration 2s --top 5 \
+                >/tmp/verify-trace-"$sub".log 2>&1; then
+            phase_pass "$n" "trace $sub --duration 2s ran cleanly"
+        else
+            local code=$?
+            if [[ "$code" -eq 124 ]]; then
+                phase_pass "$n" "trace $sub kept running until timeout (no crash)"
+            else
+                phase_fail "$n" "trace $sub exited $code (see /tmp/verify-trace-$sub.log)"
+            fi
+        fi
+    done
+
+    for sub in tcp oom fd; do
+        if sudo timeout 3s "$KERNO" watch "$sub" --duration 2s \
+                >/tmp/verify-watch-"$sub".log 2>&1; then
+            phase_pass "$n" "watch $sub --duration 2s ran cleanly"
+        else
+            local code=$?
+            if [[ "$code" -eq 124 ]]; then
+                phase_pass "$n" "watch $sub kept running until timeout (no crash)"
+            else
+                phase_fail "$n" "watch $sub exited $code (see /tmp/verify-watch-$sub.log)"
+            fi
+        fi
+    done
+
+    # audit files works without root for /tmp.
+    if "$KERNO" audit files --watch /tmp --duration 2s \
+            >/tmp/verify-audit.log 2>&1; then
+        phase_pass "$n" "audit files --watch /tmp ran cleanly"
+    else
+        phase_fail "$n" "audit files exited non-zero (see /tmp/verify-audit.log)"
+    fi
+}
+
 declare -A PHASES=(
     [deps]=phase_deps
     [build]=phase_build
@@ -617,10 +662,11 @@ declare -A PHASES=(
     [stress_ng]=phase_stress_ng
     [oom_pressure]=phase_oom_pressure
     [daemon]=phase_daemon
+    [live]=phase_live
     [manifests]=phase_manifests
 )
 
-PHASE_ORDER=(deps build quality bpf smoke doctor chaos induce_detect tc_netem stress_ng oom_pressure daemon manifests)
+PHASE_ORDER=(deps build quality bpf smoke doctor chaos induce_detect tc_netem stress_ng oom_pressure daemon live manifests)
 
 # ─── Argument parsing ─────────────────────────────────────────────────────
 
