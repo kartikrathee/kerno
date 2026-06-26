@@ -613,7 +613,15 @@ phase_live() {
     # box. Output goes to /dev/null; we check only the exit code.
 
     for sub in syscall disk sched; do
-        if sudo timeout 3s "$KERNO" trace "$sub" --duration 2s --top 5 \
+        # Only `trace syscall` has --top (top-N aggregation mode); the
+        # others are pure stream tracers, so we just bound their wall
+        # clock with --duration.
+        local extra=""
+        if [[ "$sub" == "syscall" ]]; then
+            extra="--top 5"
+        fi
+        # shellcheck disable=SC2086
+        if sudo timeout 3s "$KERNO" trace "$sub" --duration 2s $extra \
                 >/tmp/verify-trace-"$sub".log 2>&1; then
             phase_pass "$n" "trace $sub --duration 2s ran cleanly"
         else

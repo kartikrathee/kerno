@@ -7,6 +7,7 @@ import (
 	"bytes"
 	"context"
 	"strings"
+	"sync/atomic"
 	"testing"
 	"time"
 )
@@ -76,8 +77,11 @@ func TestSpinnerRunAndStop(t *testing.T) {
 	s := NewSpinner(&buf, true) // noColor for stable output
 
 	s.SetPhase("collecting")
-	var counter uint64
-	s.SetEventsFn(func() uint64 { return counter })
+	// counter is read by the spinner goroutine and written by the
+	// generator goroutine — atomic prevents the race detector from
+	// flagging the data race that production code sees as benign.
+	var counter atomic.Uint64
+	s.SetEventsFn(func() uint64 { return counter.Load() })
 
 	ctx, cancel := context.WithTimeout(context.Background(), 250*time.Millisecond)
 	defer cancel()
@@ -91,7 +95,7 @@ func TestSpinnerRunAndStop(t *testing.T) {
 			case <-ctx.Done():
 				return
 			case <-t.C:
-				counter += 100
+				counter.Add(100)
 			}
 		}
 	}()
