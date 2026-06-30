@@ -27,6 +27,10 @@ ARG VERSION=dev
 ARG COMMIT=unknown
 ARG DATE=unknown
 
+# Generate eBPF Go bindings (bpf2go produces *_bpfel.go from C sources).
+# Required because the gen_stub.go fallback is gated to non-bpf2go archs.
+RUN make generate
+
 # Build the binary.
 RUN make build VERSION=${VERSION} COMMIT=${COMMIT} DATE=${DATE}
 
