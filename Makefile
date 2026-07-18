@@ -45,7 +45,7 @@ UI_DIST_DIR      := internal/dashboard/dist/assets
 
 .PHONY: all build build-ebpf build-debug test test-cover test-race lint vet check \
 	fmt clean bpf generate docker help \
-	ui-fetch ui-dev install-tools \
+	ui-fetch ui-dev install-tools setup precommit \
 	verify demo demo-cast bpf-verify
 
 .DEFAULT_GOAL := help
@@ -157,11 +157,72 @@ docker:
 
 # ─── Utilities ───────────────────────────────────────────────────────────────
 
-## install-tools: Install development tools
+## install-tools: Install Go-based development tools (golangci-lint, bpf2go)
 install-tools:
 	@echo "Installing golangci-lint $(GOLANGCI_LINT_VERSION)..."
 	$(GO) install github.com/golangci/golangci-lint/v2/cmd/golangci-lint@$(GOLANGCI_LINT_VERSION)
+	@echo "Installing bpf2go..."
+	$(GO) install github.com/cilium/ebpf/cmd/bpf2go@latest
 	@echo "Done. Ensure $$GOPATH/bin is in your PATH."
+
+## setup: One-shot dev environment install (system pkgs + Go tools + git hooks)
+#
+# Installs everything a contributor needs to build, test, and submit
+# a PR — clang/llvm/libbpf-dev (apt or dnf), Go tools, and pre-commit
+# hooks. Idempotent; safe to re-run.
+setup:
+	@echo "==> Detecting OS and package manager..."
+	@if command -v apt-get >/dev/null; then \
+		echo "==> Installing system packages via apt-get..."; \
+		sudo apt-get update; \
+		sudo apt-get install -y --no-install-recommends \
+			clang llvm libbpf-dev linux-headers-generic linux-tools-common \
+			bpftool jq make git ca-certificates; \
+	elif command -v dnf >/dev/null; then \
+		echo "==> Installing system packages via dnf..."; \
+		sudo dnf install -y \
+			clang llvm libbpf-devel kernel-devel bpftool jq make git ca-certificates; \
+	elif command -v pacman >/dev/null; then \
+		echo "==> Installing system packages via pacman..."; \
+		sudo pacman -S --needed --noconfirm \
+			clang llvm libbpf bpf jq make git; \
+	else \
+		echo "Unsupported package manager. Install manually:"; \
+		echo "  clang, llvm, libbpf-dev, bpftool, jq, make"; \
+		exit 1; \
+	fi
+	@echo ""
+	@echo "==> Installing Go tools..."
+	@$(MAKE) install-tools
+	@echo ""
+	@echo "==> Installing pre-commit hooks (optional)..."
+	@if command -v pre-commit >/dev/null; then \
+		pre-commit install --install-hooks --hook-type commit-msg --hook-type pre-commit; \
+		echo "    pre-commit hooks installed."; \
+	else \
+		echo "    pre-commit not installed — skipping."; \
+		echo "    Install with: pip install pre-commit && make precommit"; \
+	fi
+	@echo ""
+	@echo "==> Verifying toolchain..."
+	@command -v clang   >/dev/null && echo "    [OK] clang:   $$(clang --version | head -1)"
+	@command -v bpftool >/dev/null && echo "    [OK] bpftool: $$(bpftool version | head -1)"
+	@command -v go      >/dev/null && echo "    [OK] go:      $$(go version)"
+	@command -v golangci-lint >/dev/null && echo "    [OK] golangci-lint: $$(golangci-lint --version | head -1)"
+	@test -f /sys/kernel/btf/vmlinux && echo "    [OK] BTF available at /sys/kernel/btf/vmlinux" \
+		|| echo "    [WARN] /sys/kernel/btf/vmlinux missing — BPF may not load on this host"
+	@echo ""
+	@echo "==> Setup complete. Try: make build && make test"
+
+## precommit: Install pre-commit hooks (requires pip-installed pre-commit)
+precommit:
+	@if ! command -v pre-commit >/dev/null; then \
+		echo "Install pre-commit first: pip install pre-commit"; \
+		exit 1; \
+	fi
+	pre-commit install --install-hooks --hook-type commit-msg --hook-type pre-commit
+	@echo "Hooks installed. They run on every git commit."
+	@echo "To run all hooks now: pre-commit run --all-files"
 
 ## bpf-verify: Build the standalone BPF verifier load harness
 bpf-verify:
