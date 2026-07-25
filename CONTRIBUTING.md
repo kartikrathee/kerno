@@ -471,12 +471,27 @@ perf(collector): reduce syscall aggregation allocations by 40%
 - At least one maintainer approval is required.
 - Squash-merge is preferred for clean history.
 
+## Claiming an Issue
+
+Before starting work, claim the issue so two people don't duplicate effort:
+
+| Command | What it does |
+|---|---|
+| `/assign` | Assigns you to the issue |
+| `/take` | Same as `/assign` |
+| `/unassign` | Releases the issue back to the pool |
+
+Just leave a comment with the command — a bot will assign you within seconds.
+
+**Stale-claim policy:** if you don't comment, push to a linked PR, or otherwise show activity for **10 days**, the bot auto-releases the issue so others can pick it up. You'll get a heads-up at day 7, and you can always `/assign` again if you come back.
+
+Maintainers can `/assign @someone` to assign on a contributor's behalf.
+
 ## Reporting Issues
 
-- Use the [bug report template](.github/ISSUE_TEMPLATE/bug_report.md) for bugs.
-- Use the [feature request template](.github/ISSUE_TEMPLATE/feature_request.md) for features.
+- Use the structured [issue templates](.github/ISSUE_TEMPLATE/) — bug, feature, new doctor rule, or kernel support.
 - Include kernel version (`uname -r`), Go version, and kerno version.
-- For eBPF verifier errors, include the full verifier log.
+- For eBPF verifier errors, paste the full output of `sudo ./bin/bpf-verify`.
 
 ## Security Vulnerabilities
 
