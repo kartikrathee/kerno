@@ -153,7 +153,7 @@ func runStart(ctx context.Context, opts startOpts) error {
 	if opts.prometheus {
 		mux := http.NewServeMux()
 		mux.HandleFunc("/healthz", healthzHandler(loadedCount, len(loaders)))
-		mux.HandleFunc("/readyz", healthzHandler(loadedCount, len(loaders)))
+		mux.HandleFunc("/readyz", readyzHandler(loadedCount, len(loaders)))
 		mux.Handle("/metrics", promhttp.HandlerFor(metrics.Registry, promhttp.HandlerOpts{}))
 
 		httpServer = &http.Server{
@@ -229,15 +229,46 @@ func buildLoaders(logger *slog.Logger) ([]bpf.Loader, *bpf.LoaderSet) {
 	return loaders, set
 }
 
-// healthzHandler returns the health check handler.
+// healthzHandler returns the liveness probe handler.
 func healthzHandler(loaded, total int) http.HandlerFunc {
+	startTime := time.Now()
 	return func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
 		json.NewEncoder(w).Encode(map[string]any{
-			"status":         "ok",
-			"programsLoaded": loaded,
-			"programsTotal":  total,
+			"status":          "ok",
+			"version":         version.Version,
+			"uptime":          time.Since(startTime).Seconds(),
+			"programs_loaded": loaded,
+			"programs_total":  total,
+		})
+	}
+}
+
+// readyzHandler returns the readiness probe handler.
+func readyzHandler(loaded, total int) http.HandlerFunc {
+	startTime := time.Now()
+	return func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+
+		// Ready with atleast one BPF program is loaded
+		// Partial loads are acceptable due to graceful degradation
+		if loaded == 0 {
+			w.WriteHeader(http.StatusServiceUnavailable)
+			json.NewEncoder(w).Encode(map[string]any{
+				"status":          "not_ready",
+				"programs_loaded": loaded,
+				"programs_total":  total,
+			})
+			return
+		}
+
+		w.WriteHeader(http.StatusOK)
+		json.NewEncoder(w).Encode(map[string]any{
+			"status":          "ready",
+			"programs_loaded": loaded,
+			"programs_total":  total,
+			"uptime":          time.Since(startTime).Seconds(),
 		})
 	}
 }
