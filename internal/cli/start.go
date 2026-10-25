@@ -94,7 +94,7 @@ func runStart(ctx context.Context, opts startOpts) error {
 	}
 
 	// Phase 1: Load eBPF programs with graceful degradation.
-	loaders, loaderSet := buildLoaders(logger)
+	loaders := buildLoaders(logger)
 	loadedCount := 0
 	closers := make([]func(), 0, len(loaders))
 
@@ -136,7 +136,7 @@ func runStart(ctx context.Context, opts startOpts) error {
 
 	// Phase 2: Start the metrics bridge — reads BPF events and feeds Prometheus.
 	bridge := metrics.NewBridge(logger)
-	bridge.Start(ctx, loaderSet.Loaders())
+	bridge.Start(ctx, loaders)
 	defer bridge.Stop()
 
 	// Phase 2b: Start environment adapter for event enrichment.
@@ -203,7 +203,7 @@ func runStart(ctx context.Context, opts startOpts) error {
 }
 
 // buildLoaders creates the set of BPF loaders based on config.
-func buildLoaders(logger *slog.Logger) ([]bpf.Loader, *bpf.LoaderSet) {
+func buildLoaders(logger *slog.Logger) []bpf.Loader {
 	var loaders []bpf.Loader
 
 	if cfg.Collectors.SyscallLatency {
@@ -225,8 +225,7 @@ func buildLoaders(logger *slog.Logger) ([]bpf.Loader, *bpf.LoaderSet) {
 		loaders = append(loaders, bpf.NewFDTrackLoader(logger))
 	}
 
-	set := bpf.NewLoaderSet(logger, loaders...)
-	return loaders, set
+	return loaders
 }
 
 // healthzHandler returns the liveness probe handler.
